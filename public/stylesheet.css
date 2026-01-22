@@ -1,0 +1,174 @@
+/* Custom CSS for SD Integral Chatbot */
+
+/* Starter buttons - white/light style */
+.cl-starter-button {
+    background-color: hsl(0 0% 100%) !important;
+    border: 1px solid hsl(0 0% 85%) !important;
+    color: hsl(0 0% 15%) !important;
+    transition: all 0.2s ease !important;
+}
+
+.cl-starter-button:hover {
+    background-color: hsl(0 0% 96%) !important;
+    border-color: hsl(0 0% 70%) !important;
+}
+
+/* Dark mode starter buttons */
+.dark .cl-starter-button {
+    background-color: hsl(0 0% 15%) !important;
+    border: 1px solid hsl(0 0% 25%) !important;
+    color: hsl(0 0% 95%) !important;
+}
+
+.dark .cl-starter-button:hover {
+    background-color: hsl(0 0% 20%) !important;
+    border-color: hsl(0 0% 35%) !important;
+}
+
+/* Primary button styling */
+button[data-variant="default"] {
+    background-color: hsl(0 0% 15%) !important;
+    color: hsl(0 0% 100%) !important;
+}
+
+button[data-variant="default"]:hover {
+    background-color: hsl(0 0% 25%) !important;
+}
+
+.dark button[data-variant="default"] {
+    background-color: hsl(0 0% 100%) !important;
+    color: hsl(0 0% 9%) !important;
+}
+
+.dark button[data-variant="default"]:hover {
+    background-color: hsl(0 0% 90%) !important;
+}
+
+/* Send button/icon */
+.cl-send-button,
+button[aria-label="send"] {
+    color: hsl(0 0% 15%) !important;
+}
+
+.dark .cl-send-button,
+.dark button[aria-label="send"] {
+    color: hsl(0 0% 100%) !important;
+}
+
+/* Remove focus border/outline on input */
+*:focus-visible {
+    outline: none !important;
+}
+
+/* Input/textarea focus - remove border ring */
+input:focus,
+textarea:focus,
+[contenteditable]:focus,
+.cl-input:focus,
+.cl-textarea:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+    --tw-ring-color: transparent !important;
+    --tw-ring-shadow: none !important;
+}
+
+/* Message input container */
+[data-testid="composer"] *:focus,
+[data-testid="composer"] *:focus-visible,
+.composer *:focus,
+.composer *:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-color: transparent !important;
+    --tw-ring-shadow: 0 0 0 0 transparent !important;
+}
+
+/* Links */
+a {
+    color: hsl(0 0% 30%);
+}
+
+a:hover {
+    color: hsl(0 0% 15%);
+}
+
+.dark a {
+    color: hsl(0 0% 80%);
+}
+
+.dark a:hover {
+    color: hsl(0 0% 100%);
+}
+
+/* Loading Spinner Animation */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes dots {
+
+    0%,
+    20% {
+        content: '.';
+    }
+
+    40% {
+        content: '..';
+    }
+
+    60%,
+    100% {
+        content: '...';
+    }
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 3px solid hsl(0 0% 70%);
+    border-top-color: hsl(0 0% 30%);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.dark .loading-spinner {
+    border-color: hsl(0 0% 40%);
+    border-top-color: hsl(0 0% 90%);
+}
+
+.loading-text {
+    display: inline-flex;
+    align-items: center;
+    color: hsl(0 0% 50%);
+}
+
+.dark .loading-text {
+    color: hsl(0 0% 70%);
+}
+
+.loading-dots::after {
+    content: '';
+    animation: dots 1.5s steps(1) infinite;
+}

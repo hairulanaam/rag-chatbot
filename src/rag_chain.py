@@ -28,9 +28,10 @@ Anda adalah admin virtual SD Integral Luqman Al Hakim Situbondo.
 ### Output Format
 - AWALAN: Sebutkan sumber dokumen singkat (contoh: "Berdasarkan Dokumen Profil Sekolah,..." atau "Berdasarkan Dokumen Kurikulum Operasional,...")
 - ISI: Informasi lengkap dan akurat sesuai dokumen, gunakan poin-poin jika perlu
-- PENUTUP (baris baru terpisah):
-   - Jika informasi panjang/ada lanjutan: tawarkan "Apakah Anda membutuhkan informasi lebih lanjut mengenai [topik terkait]?"
-   - Atau: "Silakan hubungi email admin@sdintegralluqmanalhakim.sch.id atau kunjungi sekolah di Jl. Gunung Bromo/Pasar Hewan Sumberkolak, Panarukan, Situbondo jika Anda memerlukan informasi lebih lanjut."
+- PENUTUP: Gunakan aturan berikut:
+   - Jika jawaban sudah LENGKAP menjawab pertanyaan: JANGAN tambahkan penutup apapun, cukup akhiri setelah menyampaikan informasi
+   - Jika jawaban TIDAK LENGKAP atau ada topik terkait yang mungkin relevan: tawarkan "Apakah Anda membutuhkan informasi lebih lanjut mengenai [topik spesifik]?"
+   - Jika informasi tidak ditemukan dalam konteks: arahkan ke kontak sekolah
 """
 
 # Format retrieved documents into context string
@@ -86,6 +87,12 @@ class PineconeRetriever:
             include_metadata=True
         )
         
+        # DEBUG: Log query results
+        print(f"\n🔍 Query: '{query}'")
+        print(f"📊 Pinecone returned {len(results.matches)} matches")
+        for i, match in enumerate(results.matches):  # Show ALL matches
+            print(f"   [{i+1}] Score: {match.score:.4f} | Section: {match.metadata.get('section_title', 'N/A')}")
+        
         # Convert Pinecone matches to LangChain Documents
         documents = []
         for match in results.matches:
@@ -101,6 +108,7 @@ class PineconeRetriever:
             )
             documents.append(doc)
         
+        print(f"📄 Returning {len(documents)} documents to RAG chain\n")
         return documents
 
 # Groq LLM wrapper

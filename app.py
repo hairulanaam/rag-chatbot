@@ -4,17 +4,30 @@ from src.rag_chain import PineconeRetriever, GroqLLM, format_docs, RateLimitErro
 # Configuration
 USE_STREAMING = True  # Set False untuk non-streaming mode
 
+
+# Starters - Quick question buttons for better UX
+@cl.set_starters
+async def set_starters():
+    return [
+        cl.Starter(
+            label="🎯 Keunggulan SD Integral dibanding sekolah lain?",
+            message="Apa keunggulan SD Integral Luqman Al Hakim dibandingkan dengan sekolah dasar lain?",
+        ),
+        cl.Starter(
+            label="📅 Bagaimana proses pendaftaran siswa baru",
+            message="Bagaimana proses pendaftaran siswa baru?",
+        ),
+        cl.Starter(
+            label="📞 Bagaimana cara menghubungi sekolah",
+            message="Bagaimana cara menghubungi sekolah dan dimana alamatnya?",
+        ),
+    ]
+
 # Initialize the chat session
 @cl.on_chat_start
 async def on_chat_start():
-    # Welcome message
-    await cl.Message(
-        content="""**Selamat datang di Layanan Informasi SD Integral Luqman Al Hakim Situbondo**
-
-Saya adalah admin virtual yang siap membantu Anda mendapatkan informasi seputar sekolah kami.
-
-Silakan ajukan pertanyaan Anda!"""
-    ).send()
+    # Welcome message dipindahkan ke chainlit.md agar Starters tetap tampil
+    # Tidak perlu mengirim message di sini
     
     # Initialize components
     try:
@@ -45,12 +58,14 @@ async def on_message(message: cl.Message):
     
     user_question = message.content
     
-    # Create message for streaming
-    msg = cl.Message(content="")
-    await msg.send()
-    
     try:
-        # Retrieve relevant documents
+        # Create message with animated loading indicator (HTML)
+        loading_html = '<span class="loading-text"><span class="loading-spinner"></span>Mencari dokumen<span class="loading-dots"></span></span>'
+        msg = cl.Message(content=loading_html)
+        await msg.send()
+        
+        # Retrieve documents (loading message already shown)
+        retriever = cl.user_session.get("retriever")
         docs = await cl.make_async(retriever.invoke)(user_question)
         
         # Check if we have results
@@ -111,16 +126,13 @@ async def on_message(message: cl.Message):
                     f"Mohon maaf, layanan sedang sibuk karena terlalu banyak permintaan.{retry_msg}\n\n"
                     f"Silakan coba lagi beberapa saat lagi."
         ).send()
-        
-        # Update message with rate limit info
-        msg.content = ""
-        await msg.update()
             
     except Exception as e:
         print(f"Error processing message: {str(e)}")
-        msg.content = ("Mohon maaf, terjadi kendala teknis dalam memproses pertanyaan Anda. "
-                      "Silakan coba beberapa saat lagi.")
-        await msg.update()
+        await cl.Message(
+            content="Mohon maaf, terjadi kendala teknis dalam memproses pertanyaan Anda. "
+                   "Silakan coba beberapa saat lagi."
+        ).send()
 
 
 if __name__ == "__main__":
