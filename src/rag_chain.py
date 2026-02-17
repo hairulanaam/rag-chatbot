@@ -66,6 +66,39 @@ def format_response(text: str) -> str:
     
     return '\n'.join(formatted_lines)
 
+# School name patterns to remove from query (sorted by length, longest first)
+SCHOOL_NAME_PATTERNS = [
+    "sd integral luqman al hakim situbondo",
+    "sd integral luqman al hakim",
+    "sd luqman al hakim situbondo",
+    "sd luqman al hakim",
+    "luqman al hakim situbondo",
+    "luqman al hakim",
+    "sd integral",
+]
+
+def rewrite_query(query: str) -> str:
+    """
+    Rewrite query untuk optimasi retrieval.
+    - Hapus nama sekolah (redundant karena semua dokumen tentang sekolah ini)
+    - Normalisasi whitespace
+    """
+    rewritten = query.lower()
+    
+    # Hapus nama sekolah dari query
+    for pattern in SCHOOL_NAME_PATTERNS:
+        rewritten = rewritten.replace(pattern, "")
+    
+    # Normalisasi whitespace
+    rewritten = " ".join(rewritten.split())
+    
+    # Jika query kosong setelah rewrite, gunakan query asli
+    if not rewritten.strip():
+        return query
+    
+    return rewritten
+
+
 class PineconeRetriever:
     # Custom retriever that uses E5 embeddings with query prefix.
     
@@ -79,7 +112,10 @@ class PineconeRetriever:
     
     # Retrieve relevant documents for a query.
     def invoke(self, query: str) -> List[Document]:
-        query_embedding = self.embeddings.embed_query(query)
+        # Rewrite query untuk optimasi retrieval
+        rewritten_query = rewrite_query(query)
+        
+        query_embedding = self.embeddings.embed_query(rewritten_query)
         
         results = self.index.query(
             vector=query_embedding,
@@ -88,7 +124,8 @@ class PineconeRetriever:
         )
         
         # DEBUG: Log query results
-        print(f"\n🔍 Query: '{query}'")
+        print(f"\n📝 Original Query: '{query}'")
+        print(f"🔄 Rewritten Query: '{rewritten_query}'")
         print(f"📊 Pinecone returned {len(results.matches)} matches")
         for i, match in enumerate(results.matches):  # Show ALL matches
             print(f"   [{i+1}] Score: {match.score:.4f} | Section: {match.metadata.get('section_title', 'N/A')}")
