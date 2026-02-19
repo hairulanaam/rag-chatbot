@@ -2,7 +2,7 @@ from typing import List, Dict
 from pinecone import Pinecone
 from groq import Groq, RateLimitError as GroqRateLimitError
 from langchain_core.documents import Document
-from src.config import GROQ_API_KEY, PINECONE_API_KEY, PINECONE_INDEX_NAME, LLM_MODEL_NAME
+from src.config import GROQ_API_KEY, PINECONE_API_KEY, PINECONE_INDEX_NAME, LLM_MODEL_NAME, SUGGESTION_MODEL_NAME
 from src.embeddings import get_embeddings
 
 
@@ -21,18 +21,59 @@ Anda adalah admin virtual SD Integral Luqman Al Hakim Situbondo.
 ### Instructions
 - Jawab HANYA berdasarkan konteks dokumen yang diberikan
 - JANGAN mengarang informasi (terutama nama, angka, tanggal)
-- Jika informasi tidak ditemukan: "Mohon maaf, informasi tidak tersedia. Silakan hubungi admin@sdintegralluqmanalhakim.sch.id atau kunjungi Jl. Gunung Bromo/Pasar Hewan Sumberkolak, Panarukan, Situbondo."
+- Jika informasi tidak ditemukan: "Mohon maaf, informasi tidak tersedia. Silakan hubungi admin@sdintegralluqmanalhakim.sch.id atau kunjungi alamat sekolah di Jl. Gunung Bromo/Pasar Hewan Sumberkolak, Panarukan, Situbondo."
 - Jika pertanyaan ambigu, minta klarifikasi
 - Tolak sopan pertanyaan di luar konteks sekolah
 
 ### Output Format
 - AWALAN: Sebutkan sumber dokumen singkat (contoh: "Berdasarkan Dokumen Profil Sekolah,..." atau "Berdasarkan Dokumen Kurikulum Operasional,...")
 - ISI: Informasi lengkap dan akurat sesuai dokumen, gunakan poin-poin jika perlu
-- PENUTUP: Gunakan aturan berikut:
-   - Jika jawaban sudah LENGKAP menjawab pertanyaan: JANGAN tambahkan penutup apapun, cukup akhiri setelah menyampaikan informasi
-   - Jika jawaban TIDAK LENGKAP atau ada topik terkait yang mungkin relevan: tawarkan "Apakah Anda membutuhkan informasi lebih lanjut mengenai [topik spesifik]?"
-   - Jika informasi tidak ditemukan dalam konteks: arahkan ke kontak sekolah
 """
+
+# --- Suggestion Prompt (separated into system/user roles) ---
+
+SUGGESTION_SYSTEM_PROMPT = """### Role
+Anda adalah pembuat saran pertanyaan lanjutan untuk chatbot informasi SD Integral Luqman Al Hakim.
+
+### Instructions
+1. Pertanyaan HARUS bisa dijawab oleh informasi yang ADA di konteks dokumen
+2. JANGAN buat pertanyaan yang jawabannya TIDAK ADA di konteks
+3. Pertanyaan harus terkait topik yang ditanyakan user
+4. Fokus pada informasi di konteks yang BELUM dibahas di jawaban
+5. Maksimal 8 kata per pertanyaan
+6. Tulis tepat 2 pertanyaan, satu per baris, tanpa nomor atau bullet
+7. Jika tidak ada saran relevan, tulis: TIDAK_ADA
+
+### Expected Output
+Dua pertanyaan singkat, satu per baris, diakhiri ###
+
+### Contoh 1
+Konteks: "Syarat masuk: usia minimal 6 tahun, fotocopy akta kelahiran, pas foto 3x4. Biaya pendaftaran Rp200.000."
+Pertanyaan user: Bagaimana proses pendaftaran siswa baru?
+Jawaban: Proses pendaftaran terdiri dari: membayar uang pendaftaran, mengisi formulir, observasi, pengumuman, dan daftar ulang.
+
+Saran pertanyaan:
+Apa syarat masuk siswa baru?
+Berapa biaya pendaftaran?
+###
+
+### Contoh 2
+Konteks: "Visi sekolah: Menjadi sekolah unggulan berbasis Islam. Misi: membentuk karakter Islami, mengembangkan potensi akademik."
+Pertanyaan user: Apa visi sekolah?
+Jawaban: Visi sekolah adalah menjadi sekolah unggulan berbasis Islam.
+
+Saran pertanyaan:
+Apa misi sekolah?
+Bagaimana sekolah membentuk karakter Islami?
+###"""
+
+SUGGESTION_USER_PROMPT = """Konteks dokumen:
+{context}
+
+Pertanyaan user: {question}
+Jawaban yang diberikan: {answer}
+
+Saran pertanyaan:"""
 
 # Format retrieved documents into context string
 def format_docs(docs: List[Document]) -> str:
@@ -140,7 +181,8 @@ class PineconeRetriever:
                     "content": content,
                     "source": match.metadata.get("source", "Unknown"),
                     "section_title": match.metadata.get("section_title", ""),
-                    "sequence": match.metadata.get("sequence", 0)
+                    "sequence": match.metadata.get("sequence", 0),
+                    "score": match.score  # Store similarity score for downstream filtering
                 }
             )
             documents.append(doc)
@@ -263,6 +305,80 @@ Pertanyaan: {question}"""
         except Exception as e:
             print(f"Groq API error: {str(e)}")
             raise
+    
+    # Generate context-aware query suggestions using lightweight model
+    def generate_suggestions(self, question: str, docs: List[Document], answer: str) -> List[str]:
+        try:
+            # Filter docs by relative score threshold (95% of top score)
+            if docs:
+                top_score = max(doc.metadata.get("score", 0) for doc in docs)
+                threshold = top_score * 0.95
+                relevant_docs = [doc for doc in docs if doc.metadata.get("score", 0) >= threshold]
+                
+                print(f"🔍 Suggestion filter: top_score={top_score:.4f}, threshold={threshold:.4f}, {len(relevant_docs)}/{len(docs)} docs passed")
+            else:
+                relevant_docs = []
+            
+            if not relevant_docs:
+                return []
+            
+            # Build context from filtered docs only
+            filtered_context = format_docs(relevant_docs)
+            
+            user_prompt = SUGGESTION_USER_PROMPT.format(
+                context=filtered_context[:2000],
+                question=question,
+                answer=answer[:500]
+            )
+            
+            completion = self.client.chat.completions.create(
+                model=SUGGESTION_MODEL_NAME,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": SUGGESTION_SYSTEM_PROMPT
+                    },
+                    {
+                        "role": "user",
+                        "content": user_prompt
+                    }
+                ],
+                temperature=0.2,
+                max_tokens=100,
+                top_p=0.9,
+                stop=["###"],
+                stream=False
+            )
+            
+            response_text = completion.choices[0].message.content.strip()
+            
+            # Handle "no relevant suggestions" response
+            if "TIDAK_ADA" in response_text.upper():
+                print("💡 No relevant suggestions for this topic")
+                return []
+            
+            # Parse suggestions: split by newline, clean up
+            suggestions = []
+            for line in response_text.split("\n"):
+                line = line.strip()
+                # Remove numbering/bullets if model adds them
+                line = line.lstrip("0123456789.-) ").strip()
+                # Filter empty, too-short lines, and any TIDAK_ADA remnants
+                if line and len(line) > 5 and "TIDAK_ADA" not in line.upper():
+                    suggestions.append(line)
+            
+            # Return max 2 suggestions
+            suggestions = suggestions[:2]
+            
+            print(f"💡 Generated {len(suggestions)} suggestions")
+            for i, s in enumerate(suggestions, 1):
+                print(f"   [{i}] {s}")
+            
+            return suggestions
+            
+        except Exception as e:
+            print(f"⚠️ Suggestion generation failed (non-critical): {str(e)}")
+            return []
 
 # Initialize Pinecone retriever
 def get_retriever(k: int = 4) -> PineconeRetriever:

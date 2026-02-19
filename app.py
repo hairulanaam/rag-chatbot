@@ -46,6 +46,23 @@ async def on_chat_start():
         ).send()
 
 
+# Action callback - when user clicks a suggestion button
+@cl.action_callback("suggestion")
+async def on_suggestion(action: cl.Action):
+    """Handle suggestion button click - send as new question"""
+    suggestion_query = action.payload["query"]
+    
+    # Show user's selected suggestion as their message
+    await cl.Message(
+        author="You",
+        type="user_message",
+        content=suggestion_query,
+    ).send()
+    
+    # Process the suggestion through RAG pipeline
+    await process_question(suggestion_query)
+
+
 # Audio Handling
 @cl.on_audio_start
 async def on_audio_start():
@@ -213,6 +230,26 @@ async def process_question(user_question: str, msg: cl.Message = None):
         
         # Final update
         await msg.update()
+        
+        # Generate context-aware query suggestions
+        try:
+            suggestions = await cl.make_async(llm.generate_suggestions)(
+                user_question, docs, full_response
+            )
+            
+            if suggestions:
+                actions = []
+                for suggestion in suggestions:
+                    actions.append(cl.Action(
+                        name="suggestion",
+                        payload={"query": suggestion},
+                        label=suggestion
+                    ))
+                msg.actions = actions
+                await msg.update()
+        except Exception as e:
+            # Non-critical: if suggestions fail, answer is still displayed
+            print(f"⚠️ Failed to add suggestions: {str(e)}")
 
         # Source documents in panel sidebar
         # if docs:
