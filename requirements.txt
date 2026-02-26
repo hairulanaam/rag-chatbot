@@ -22,6 +22,11 @@ python-dotenv>=1.0.0
 numpy>=1.24.0
 tqdm>=4.66.0
 
+# Dashboard
+fastapi>=0.100.0
+uvicorn>=0.23.0
+python-multipart>=0.0.6
+
 # Optional: untuk Hybrid Search (BM25)
 # rank-bm25>=0.2.2
 # nltk>=3.8.0

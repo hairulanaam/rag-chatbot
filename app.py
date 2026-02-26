@@ -2,6 +2,7 @@ import chainlit as cl
 import numpy as np
 import audioop
 from src.rag_chain import PineconeRetriever, GroqLLM, format_docs, RateLimitError
+from src.database import log_query
 from src.audio_handler import AudioHandler, SILENCE_THRESHOLD, SILENCE_TIMEOUT, MIN_AUDIO_DURATION
 
 # Configuration
@@ -206,10 +207,12 @@ async def process_question(user_question: str, msg: cl.Message = None):
         
         # Check if we have results
         if not docs:
-            msg.content = ("Mohon maaf, saya tidak menemukan informasi yang relevan dengan pertanyaan Anda "
+            no_result_msg = ("Mohon maaf, saya tidak menemukan informasi yang relevan dengan pertanyaan Anda "
                           "dalam dokumen sekolah. Silakan coba dengan kata kunci lain atau hubungi "
                           "pihak sekolah secara langsung.")
+            msg.content = no_result_msg
             await msg.update()
+            log_query(user_question, no_result_msg, "no_result", "Tidak ada dokumen relevan", 0)
             return
         
         # Format context
@@ -230,6 +233,9 @@ async def process_question(user_question: str, msg: cl.Message = None):
         
         # Final update
         await msg.update()
+        
+        # Log successful query
+        log_query(user_question, full_response, "success", None, len(docs))
         
         # Generate context-aware query suggestions
         try:
@@ -276,16 +282,20 @@ async def process_question(user_question: str, msg: cl.Message = None):
     except RateLimitError as e:
         # Tampilkan toast notification untuk rate limit
         retry_msg = f" Silakan tunggu {e.retry_after} detik." if e.retry_after else ""
-        msg.content = (f"⚠️ **Layanan sedang sibuk**\n\n"
+        error_content = (f"⚠️ **Layanan sedang sibuk**\n\n"
                       f"Mohon maaf, layanan sedang sibuk karena terlalu banyak permintaan.{retry_msg}\n\n"
                       f"Silakan coba lagi beberapa saat lagi.")
+        msg.content = error_content
         await msg.update()
+        log_query(user_question, error_content, "error", f"Rate limit: {str(e)}", 0)
         
     except Exception as e:
         print(f"Error processing message: {str(e)}")
-        msg.content = ("Mohon maaf, terjadi kendala teknis dalam memproses pertanyaan Anda. "
+        error_content = ("Mohon maaf, terjadi kendala teknis dalam memproses pertanyaan Anda. "
                       "Silakan coba beberapa saat lagi.")
+        msg.content = error_content
         await msg.update()
+        log_query(user_question, error_content, "error", str(e), 0)
 
 
 # Handle user text messages 

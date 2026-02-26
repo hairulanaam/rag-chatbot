@@ -104,5 +104,132 @@ def run_ingestion(data_dir: str = "data", max_tokens: int = 450):
     return index
 
 
+# ============================================================
+# Per-document operations for Dashboard
+# ============================================================
+
+def _get_pinecone_index():
+    """Get Pinecone index instance."""
+    pc = Pinecone(api_key=PINECONE_API_KEY)
+    return pc.Index(PINECONE_INDEX_NAME)
+
+
+def delete_document_vectors(file_prefix: str) -> dict:
+    """
+    Delete all vectors from Pinecone associated with a specific document.
+    Vectors are identified by ID prefix (e.g., 'profil_section_*').
+    
+    Returns dict with deletion results.
+    """
+    index = _get_pinecone_index()
+    
+    # List all vector IDs with the file prefix
+    prefix = f"{file_prefix}_section_"
+    deleted_count = 0
+    
+    try:
+        # Use list to find all vector IDs with prefix
+        results = index.list(prefix=prefix)
+        all_ids = []
+        
+        for ids in results:
+            all_ids.extend(ids)
+        
+        if all_ids:
+            # Delete in batches of 100
+            for i in range(0, len(all_ids), 100):
+                batch = all_ids[i:i + 100]
+                index.delete(ids=batch)
+                deleted_count += len(batch)
+        
+        print(f"🗑️ Deleted {deleted_count} vectors with prefix '{prefix}'")
+        return {"success": True, "deleted_count": deleted_count, "prefix": prefix}
+        
+    except Exception as e:
+        print(f"❌ Error deleting vectors: {e}")
+        return {"success": False, "error": str(e), "deleted_count": 0}
+
+
+def index_single_document(file_path: str, max_tokens: int = 450) -> dict:
+    """
+    Index a single document to Pinecone.
+    
+    Returns dict with indexing results.
+    """
+    try:
+        path = Path(file_path)
+        if not path.exists():
+            return {"success": False, "error": f"File not found: {file_path}"}
+        
+        # Chunk the document
+        chunker = DocumentChunker(max_tokens=max_tokens)
+        chunks = chunker.process_documentation(file_path)
+        
+        if not chunks:
+            return {"success": False, "error": "No chunks created from document"}
+        
+        # Upload to Pinecone
+        upload_to_pinecone(chunks)
+        
+        return {
+            "success": True, 
+            "chunks_count": len(chunks),
+            "file": path.name
+        }
+        
+    except Exception as e:
+        print(f"❌ Error indexing document: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def reindex_document(file_path: str, max_tokens: int = 450) -> dict:
+    """
+    Re-index a document: delete old vectors then index fresh.
+    
+    Returns dict with re-indexing results.
+    """
+    path = Path(file_path)
+    file_prefix = path.stem
+    
+    # Step 1: Delete old vectors
+    delete_result = delete_document_vectors(file_prefix)
+    
+    # Step 2: Index the document fresh
+    index_result = index_single_document(file_path, max_tokens)
+    
+    return {
+        "success": index_result.get("success", False),
+        "deleted_count": delete_result.get("deleted_count", 0),
+        "chunks_count": index_result.get("chunks_count", 0),
+        "file": path.name,
+        "error": index_result.get("error") or delete_result.get("error")
+    }
+
+
+def get_index_stats() -> dict:
+    """
+    Get Pinecone index statistics.
+    
+    Returns dict with index stats.
+    """
+    try:
+        index = _get_pinecone_index()
+        stats = index.describe_index_stats()
+        
+        return {
+            "success": True,
+            "total_vector_count": stats.total_vector_count,
+            "dimension": stats.dimension,
+            "index_name": PINECONE_INDEX_NAME,
+            "namespaces": {
+                ns: {"vector_count": data.vector_count}
+                for ns, data in stats.namespaces.items()
+            } if stats.namespaces else {}
+        }
+    except Exception as e:
+        print(f"❌ Error getting index stats: {e}")
+        return {"success": False, "error": str(e)}
+
+
 if __name__ == "__main__":
     run_ingestion()
