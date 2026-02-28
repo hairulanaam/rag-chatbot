@@ -2,9 +2,9 @@
 Dashboard API routes for managing chatbot documents and indexing.
 """
 import os
-import secrets
+import jwt
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form, Depends
@@ -26,8 +26,9 @@ from src.ingestion import (
 
 router = APIRouter()
 
-# In-memory session store: {token: {"username": str, "created_at": datetime}}
-_sessions = {}
+# JWT Configuration
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24
 
 
 # ============================================================
@@ -48,15 +49,32 @@ class DocumentContent(BaseModel):
 
 
 # ============================================================
-# Auth Helpers
+# Auth Helpers (JWT)
 # ============================================================
 
+def _create_token(username: str) -> str:
+    """Create a JWT token for the given username."""
+    payload = {
+        "sub": username,
+        "iat": datetime.now(timezone.utc),
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS),
+    }
+    return jwt.encode(payload, DASHBOARD_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+
 def get_current_user(request: Request) -> str:
-    """Extract and validate session token from request."""
+    """Extract and validate JWT token from request cookie."""
     token = request.cookies.get("session_token")
-    if not token or token not in _sessions:
+    if not token:
         raise HTTPException(status_code=401, detail="Tidak terautentikasi. Silakan login.")
-    return _sessions[token]["username"]
+    
+    try:
+        payload = jwt.decode(token, DASHBOARD_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return payload["sub"]
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Session kedaluwarsa. Silakan login kembali.")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token tidak valid. Silakan login kembali.")
 
 
 # ============================================================
@@ -65,15 +83,11 @@ def get_current_user(request: Request) -> str:
 
 @router.post("/api/auth/login")
 async def login(data: LoginRequest):
-    """Login and create session."""
+    """Login and create JWT token."""
     if not verify_user(data.username, data.password):
         raise HTTPException(status_code=401, detail="Username atau password salah")
     
-    token = secrets.token_urlsafe(32)
-    _sessions[token] = {
-        "username": data.username,
-        "created_at": datetime.now()
-    }
+    token = _create_token(data.username)
     
     response = JSONResponse(content={"success": True, "message": "Login berhasil"})
     response.set_cookie(
@@ -81,18 +95,14 @@ async def login(data: LoginRequest):
         value=token,
         httponly=True,
         samesite="strict",
-        max_age=86400  # 24 hours
+        max_age=JWT_EXPIRATION_HOURS * 3600
     )
     return response
 
 
 @router.post("/api/auth/logout")
-async def logout(request: Request):
-    """Logout and destroy session."""
-    token = request.cookies.get("session_token")
-    if token and token in _sessions:
-        del _sessions[token]
-    
+async def logout():
+    """Logout by clearing the JWT cookie."""
     response = JSONResponse(content={"success": True, "message": "Logout berhasil"})
     response.delete_cookie("session_token")
     return response
@@ -111,6 +121,30 @@ async def api_change_password(data: ChangePasswordRequest, username: str = Depen
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["message"])
     return result
+
+
+# ============================================================
+# Document Helpers
+# ============================================================
+
+def _validate_and_resolve(filename: str) -> Path:
+    """Validate filename and return safe resolved path inside DATA_DIR."""
+    # 1. Cek karakter path traversal SEBELUM path dibuat
+    if not filename or ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Nama file tidak valid")
+    
+    # 2. Pastikan ekstensi .md
+    if not filename.endswith(".md"):
+        raise HTTPException(status_code=400, detail="Hanya file .md yang diperbolehkan")
+    
+    # 3. Bangun path dan resolve
+    file_path = (Path(DATA_DIR) / filename).resolve()
+    
+    # 4. Pastikan path hasil resolve masih di dalam DATA_DIR
+    if not str(file_path).startswith(str(Path(DATA_DIR).resolve())):
+        raise HTTPException(status_code=400, detail="Nama file tidak valid")
+    
+    return file_path
 
 
 # ============================================================
@@ -141,14 +175,10 @@ async def list_documents(username: str = Depends(get_current_user)):
 @router.get("/api/documents/{filename}")
 async def get_document(filename: str, username: str = Depends(get_current_user)):
     """Read content of a specific markdown document."""
-    file_path = Path(DATA_DIR) / filename
+    file_path = _validate_and_resolve(filename)
     
-    if not file_path.exists() or not file_path.suffix == ".md":
+    if not file_path.exists():
         raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
-    
-    # Security: prevent path traversal
-    if ".." in filename or "/" in filename or "\\" in filename:
-        raise HTTPException(status_code=400, detail="Nama file tidak valid")
     
     content = file_path.read_text(encoding="utf-8")
     stat = file_path.stat()
@@ -172,10 +202,7 @@ async def create_document(data: DocumentContent, username: str = Depends(get_cur
     if not filename.endswith(".md"):
         filename += ".md"
     
-    if ".." in filename or "/" in filename or "\\" in filename:
-        raise HTTPException(status_code=400, detail="Nama file tidak valid")
-    
-    file_path = Path(DATA_DIR) / filename
+    file_path = _validate_and_resolve(filename)
     
     if file_path.exists():
         raise HTTPException(status_code=409, detail="File sudah ada. Gunakan PUT untuk mengedit.")
@@ -191,10 +218,7 @@ async def create_document(data: DocumentContent, username: str = Depends(get_cur
 @router.put("/api/documents/{filename}")
 async def update_document(filename: str, data: DocumentContent, username: str = Depends(get_current_user)):
     """Update content of an existing document."""
-    file_path = Path(DATA_DIR) / filename
-    
-    if ".." in filename or "/" in filename or "\\" in filename:
-        raise HTTPException(status_code=400, detail="Nama file tidak valid")
+    file_path = _validate_and_resolve(filename)
     
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
@@ -207,10 +231,7 @@ async def update_document(filename: str, data: DocumentContent, username: str = 
 @router.delete("/api/documents/{filename}")
 async def delete_document(filename: str, username: str = Depends(get_current_user)):
     """Delete a document and its associated vectors from Pinecone."""
-    file_path = Path(DATA_DIR) / filename
-    
-    if ".." in filename or "/" in filename or "\\" in filename:
-        raise HTTPException(status_code=400, detail="Nama file tidak valid")
+    file_path = _validate_and_resolve(filename)
     
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
@@ -237,10 +258,7 @@ async def delete_document(filename: str, username: str = Depends(get_current_use
 @router.post("/api/documents/{filename}/index")
 async def index_document(filename: str, username: str = Depends(get_current_user)):
     """Index or re-index a specific document to Pinecone."""
-    file_path = Path(DATA_DIR) / filename
-    
-    if ".." in filename or "/" in filename or "\\" in filename:
-        raise HTTPException(status_code=400, detail="Nama file tidak valid")
+    file_path = _validate_and_resolve(filename)
     
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")

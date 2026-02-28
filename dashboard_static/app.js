@@ -100,7 +100,8 @@ async function checkAuth() {
     try {
         await api('/api/auth/check');
         showDashboard();
-        loadDocuments();
+        loadLogs();
+        loadLogStats();
     } catch {
         showLogin();
     }
@@ -134,7 +135,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
         showToast('Login berhasil!', 'success');
         showDashboard();
-        loadDocuments();
+        loadLogs();
+        loadLogStats();
     } catch (err) {
         showToast(err.message, 'error');
     } finally {
@@ -161,7 +163,7 @@ let currentEditFile = null;
 
 function navigateTo(page) {
     if (page === 'chatbot') {
-        window.open('/', '_blank');
+        window.open('/chat', '_blank');
         return;
     }
 
@@ -179,7 +181,6 @@ function navigateTo(page) {
 
     // Load data for specific pages
     if (page === 'documents') loadDocuments();
-    if (page === 'index-status') loadIndexStatus();
     if (page === 'logs') { loadLogs(); loadLogStats(); }
 
     // Close mobile sidebar
@@ -394,10 +395,11 @@ async function createDocument(andIndex = false) {
             showToast(result.message, 'success');
         }
 
-        // Clear form
+        // Clear form & close create section
         document.getElementById('newDocName').value = '';
         document.getElementById('newDocContent').value = '';
-        navigateTo('documents');
+        document.getElementById('createSection').style.display = 'none';
+        loadDocuments();
     } catch (err) {
         showToast(err.message, 'error');
     } finally {
@@ -446,8 +448,10 @@ async function uploadFile(file) {
 
         showToast(result.message, 'success');
 
-        // Reset input
+        // Reset input & close create section
         fileInput.value = '';
+        document.getElementById('createSection').style.display = 'none';
+        loadDocuments();
     } catch (err) {
         showToast(err.message, 'error');
     } finally {
@@ -456,47 +460,27 @@ async function uploadFile(file) {
 }
 
 // ============================================================
-// Index Status
+// Create Section Toggle & Tabs
 // ============================================================
 
-async function loadIndexStatus() {
-    try {
-        const stats = await api('/api/index/status');
-
-        const statsEl = document.getElementById('indexStats');
-        statsEl.innerHTML = `
-            <div class="stat-card">
-                <div class="stat-icon">🔢</div>
-                <div class="stat-value">${stats.total_vector_count || 0}</div>
-                <div class="stat-label">Total Vectors</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">📐</div>
-                <div class="stat-value">${stats.dimension || '-'}</div>
-                <div class="stat-label">Dimensi</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">📄</div>
-                <div class="stat-value">${stats.local_document_count || 0}</div>
-                <div class="stat-label">Dokumen Lokal</div>
-            </div>
-        `;
-
-        const detailsEl = document.getElementById('indexDetails');
-        detailsEl.innerHTML = `
-            <table>
-                <tr><td style="color: var(--text-secondary);">Nama Index</td><td><strong>${stats.index_name || '-'}</strong></td></tr>
-                <tr><td style="color: var(--text-secondary);">Total Vectors</td><td>${stats.total_vector_count || 0}</td></tr>
-                <tr><td style="color: var(--text-secondary);">Dimensi Embedding</td><td>${stats.dimension || '-'}</td></tr>
-                <tr><td style="color: var(--text-secondary);">Dokumen Lokal</td><td>${stats.local_document_count || 0}</td></tr>
-                <tr><td style="color: var(--text-secondary);">Status</td><td><span class="badge badge-success">Active</span></td></tr>
-            </table>
-        `;
-
-    } catch (err) {
-        showToast(err.message, 'error');
-        document.getElementById('indexDetails').innerHTML = `<p style="color: var(--danger);">${err.message}</p>`;
+function toggleCreateSection() {
+    const section = document.getElementById('createSection');
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        section.style.animation = 'fadeIn 0.2s ease';
+    } else {
+        section.style.display = 'none';
     }
+}
+
+function switchCreateTab(tab) {
+    // Toggle tab buttons
+    document.getElementById('tabBtnUpload').classList.toggle('active', tab === 'upload');
+    document.getElementById('tabBtnManual').classList.toggle('active', tab === 'manual');
+
+    // Toggle tab content
+    document.getElementById('tab-upload').classList.toggle('active', tab === 'upload');
+    document.getElementById('tab-manual').classList.toggle('active', tab === 'manual');
 }
 
 // ============================================================

@@ -805,3 +805,43 @@ tr:hover td {
         grid-template-columns: 1fr;
     }
 }
+
+/* === Create Section Tabs === */
+.create-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-input);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+}
+
+.create-tab {
+    padding: 8px 18px;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.create-tab:hover {
+    color: var(--text-primary);
+}
+
+.create-tab.active {
+    background: var(--accent);
+    color: white;
+}
+
+.create-tab-content {
+    display: none;
+}
+
+.create-tab-content.active {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}

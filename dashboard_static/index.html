@@ -54,20 +54,11 @@
             </div>
 
             <nav class="sidebar-nav">
-                <button class="nav-item active" data-page="documents" onclick="navigateTo('documents')">
-                    <span class="icon">📄</span> Dokumen
-                </button>
-                <button class="nav-item" data-page="upload" onclick="navigateTo('upload')">
-                    <span class="icon">📤</span> Upload
-                </button>
-                <button class="nav-item" data-page="create" onclick="navigateTo('create')">
-                    <span class="icon">✏️</span> Buat Dokumen
-                </button>
-                <button class="nav-item" data-page="index-status" onclick="navigateTo('index-status')">
-                    <span class="icon">📊</span> Status Index
-                </button>
-                <button class="nav-item" data-page="logs" onclick="navigateTo('logs')">
+                <button class="nav-item active" data-page="logs" onclick="navigateTo('logs')">
                     <span class="icon">📋</span> Log Query
+                </button>
+                <button class="nav-item" data-page="documents" onclick="navigateTo('documents')">
+                    <span class="icon">📄</span> Dokumen
                 </button>
                 <button class="nav-item" data-page="settings" onclick="navigateTo('settings')">
                     <span class="icon">⚙️</span> Pengaturan
@@ -87,8 +78,64 @@
         <!-- Main Content -->
         <main class="main-content">
 
+            <!-- ===== QUERY LOGS PAGE (DEFAULT) ===== -->
+            <div class="page active" id="page-logs">
+                <div class="page-header">
+                    <h1>📋 Log Query</h1>
+                    <p>Riwayat pertanyaan yang masuk ke chatbot</p>
+                </div>
+
+                <!-- Chart + Stats Row -->
+                <div class="log-overview">
+                    <div class="card chart-card">
+                        <h3>Statistik Respons</h3>
+                        <div id="logChart" class="chart-container">
+                            <p style="color: var(--text-muted);">Memuat data...</p>
+                        </div>
+                    </div>
+                    <div class="card stats-card">
+                        <h3>Ringkasan</h3>
+                        <div id="logStatsInfo">
+                            <p style="color: var(--text-muted);">Memuat data...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Riwayat Query</h3>
+                        <div class="btn-group">
+                            <button class="btn btn-outline btn-sm" onclick="loadLogs(); loadLogStats()">🔄 Refresh</button>
+                            <button class="btn btn-danger btn-sm" onclick="clearLogs()">🗑️ Hapus Semua</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width:40px">#</th>
+                                    <th>Query</th>
+                                    <th>Response</th>
+                                    <th style="width:90px">Status</th>
+                                    <th style="width:50px">Docs</th>
+                                    <th style="width:140px">Waktu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTable">
+                                <tr>
+                                    <td colspan="6" style="text-align:center; color: var(--text-muted); padding: 40px;">
+                                        Memuat data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="logsPagination"></div>
+                </div>
+            </div>
+
             <!-- ===== DOCUMENTS PAGE ===== -->
-            <div class="page active" id="page-documents">
+            <div class="page" id="page-documents">
                 <div class="page-header">
                     <h1>📄 Dokumen</h1>
                     <p>Kelola dokumen informasi chatbot</p>
@@ -96,12 +143,55 @@
 
                 <div class="stats-grid" id="docStats"></div>
 
+                <!-- Create/Upload Section (collapsible) -->
+                <div class="card" id="createSection" style="display: none;">
+                    <div class="card-header">
+                        <div class="create-tabs">
+                            <button class="create-tab active" id="tabBtnUpload" onclick="switchCreateTab('upload')">📤 Upload File</button>
+                            <button class="create-tab" id="tabBtnManual" onclick="switchCreateTab('manual')">✏️ Buat Manual</button>
+                        </div>
+                        <button class="btn btn-outline btn-sm" onclick="toggleCreateSection()">✕ Tutup</button>
+                    </div>
+
+                    <!-- Upload Tab -->
+                    <div class="create-tab-content active" id="tab-upload">
+                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                            <div class="upload-icon">📁</div>
+                            <p>Klik atau drag & drop file di sini</p>
+                            <p class="upload-hint">Format: PDF, JPG, PNG, DOCX, PPTX, XLSX, TXT</p>
+                        </div>
+                        <input type="file" id="fileInput" style="display: none;"
+                            accept=".pdf,.jpg,.jpeg,.png,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.html,.htm,.txt,.bmp,.tiff,.gif,.webp">
+                    </div>
+
+                    <!-- Manual Create Tab -->
+                    <div class="create-tab-content" id="tab-manual">
+                        <div class="form-group">
+                            <label for="newDocName">Nama File</label>
+                            <input type="text" id="newDocName" placeholder="contoh: informasi_pendaftaran">
+                            <small style="color: var(--text-muted); margin-top: 4px; display: block;">Ekstensi .md akan
+                                ditambahkan otomatis</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="newDocContent">Konten Markdown</label>
+                            <textarea id="newDocContent" rows="12"
+                                placeholder="# Judul Dokumen&#10;&#10;## Sub Judul&#10;&#10;Isi konten informasi di sini..."></textarea>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="createDocument(false)">📄 Simpan</button>
+                            <button class="btn btn-success" onclick="createDocument(true)">📄 Simpan & Index</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documents Table -->
                 <div class="card">
                     <div class="card-header">
                         <h3>Daftar Dokumen</h3>
                         <div class="btn-group">
+                            <button class="btn btn-primary btn-sm" onclick="toggleCreateSection()">➕ Tambah</button>
                             <button class="btn btn-outline btn-sm" onclick="loadDocuments()">🔄 Refresh</button>
-                            <button class="btn btn-primary btn-sm" onclick="indexAllDocuments()">⚡ Index Semua</button>
+                            <button class="btn btn-success btn-sm" onclick="indexAllDocuments()">⚡ Index Semua</button>
                         </div>
                     </div>
                     <div class="table-container">
@@ -141,123 +231,6 @@
                         <button class="btn btn-success" onclick="saveAndIndex()">💾 Simpan & Index</button>
                         <button class="btn btn-outline" onclick="navigateTo('documents')">← Kembali</button>
                     </div>
-                </div>
-            </div>
-
-            <!-- ===== UPLOAD PAGE ===== -->
-            <div class="page" id="page-upload">
-                <div class="page-header">
-                    <h1>📤 Upload File</h1>
-                    <p>Upload file dokumen (PDF, gambar, dll.) untuk dikonversi ke markdown</p>
-                </div>
-                <div class="card">
-                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-                        <div class="upload-icon">📁</div>
-                        <p>Klik atau drag & drop file di sini</p>
-                        <p class="upload-hint">Format: PDF, JPG, PNG, DOCX, PPTX, XLSX, TXT</p>
-                    </div>
-                    <input type="file" id="fileInput" style="display: none;"
-                        accept=".pdf,.jpg,.jpeg,.png,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.html,.htm,.txt,.bmp,.tiff,.gif,.webp">
-                    <div id="uploadStatus" style="display:none;"></div>
-                </div>
-            </div>
-
-            <!-- ===== CREATE DOCUMENT PAGE ===== -->
-            <div class="page" id="page-create">
-                <div class="page-header">
-                    <h1>✏️ Buat Dokumen Baru</h1>
-                    <p>Buat dokumen markdown baru secara langsung</p>
-                </div>
-                <div class="card">
-                    <div class="form-group">
-                        <label for="newDocName">Nama File</label>
-                        <input type="text" id="newDocName" placeholder="contoh: informasi_pendaftaran">
-                        <small style="color: var(--text-muted); margin-top: 4px; display: block;">Ekstensi .md akan
-                            ditambahkan otomatis</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="newDocContent">Konten Markdown</label>
-                        <textarea id="newDocContent" rows="18"
-                            placeholder="# Judul Dokumen&#10;&#10;## Sub Judul&#10;&#10;Isi konten informasi di sini..."></textarea>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn btn-primary" onclick="createDocument(false)">📄 Simpan</button>
-                        <button class="btn btn-success" onclick="createDocument(true)">📄 Simpan & Index</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ===== INDEX STATUS PAGE ===== -->
-            <div class="page" id="page-index-status">
-                <div class="page-header">
-                    <h1>📊 Status Index</h1>
-                    <p>Statistik Pinecone vector store</p>
-                </div>
-                <div class="stats-grid" id="indexStats"></div>
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Informasi Index</h3>
-                        <button class="btn btn-outline btn-sm" onclick="loadIndexStatus()">🔄 Refresh</button>
-                    </div>
-                    <div id="indexDetails">
-                        <p style="color: var(--text-muted);">Memuat data...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ===== QUERY LOGS PAGE ===== -->
-            <div class="page" id="page-logs">
-                <div class="page-header">
-                    <h1>📋 Log Query</h1>
-                    <p>Riwayat pertanyaan yang masuk ke chatbot</p>
-                </div>
-
-                <!-- Chart + Stats Row -->
-                <div class="log-overview">
-                    <div class="card chart-card">
-                        <h3>Statistik Respons</h3>
-                        <div id="logChart" class="chart-container">
-                            <p style="color: var(--text-muted);">Memuat data...</p>
-                        </div>
-                    </div>
-                    <div class="card stats-card">
-                        <h3>Ringkasan</h3>
-                        <div id="logStatsInfo">
-                            <p style="color: var(--text-muted);">Memuat data...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Logs Table -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Riwayat Query</h3>
-                        <div class="btn-group">
-                            <button class="btn btn-outline btn-sm" onclick="loadLogs()">🔄 Refresh</button>
-                            <button class="btn btn-danger btn-sm" onclick="clearLogs()">🗑️ Hapus Semua</button>
-                        </div>
-                    </div>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style="width:40px">#</th>
-                                    <th>Query</th>
-                                    <th>Response</th>
-                                    <th style="width:90px">Status</th>
-                                    <th style="width:50px">Docs</th>
-                                    <th style="width:140px">Waktu</th>
-                                </tr>
-                            </thead>
-                            <tbody id="logsTable">
-                                <tr>
-                                    <td colspan="6" style="text-align:center; color: var(--text-muted); padding: 40px;">
-                                        Memuat data...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="pagination" id="logsPagination"></div>
                 </div>
             </div>
 
