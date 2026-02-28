@@ -7,8 +7,13 @@ load_dotenv()
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 LLAMA_PARSE_API_KEY = os.getenv("LLAMA_PARSE_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
-EMBEDDING_MODEL_NAME = "intfloat/multilingual-e5-base"
+
+# Embedding - Google Gemini Embedding (API)
+EMBEDDING_MODEL_NAME = "gemini-embedding-001"
+EMBEDDING_DIMENSION = 768  # Diturunkan dari 3072 default untuk efisiensi storage Pinecone
+
 LLM_MODEL_NAME = "llama-3.3-70b-versatile"
 SUGGESTION_MODEL_NAME = "llama-3.1-8b-instant"
 STT_MODEL_NAME = "whisper-large-v3-turbo"

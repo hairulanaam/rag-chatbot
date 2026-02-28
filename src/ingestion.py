@@ -15,7 +15,7 @@ def get_markdown_files(data_dir: str) -> List[str]:
     return [str(f) for f in md_files]
 
 # Process all documents using DocumentChunker
-def process_documents(file_paths: List[str], max_tokens: int = 450) -> List[Dict]:
+def process_documents(file_paths: List[str], max_tokens: int = 1840) -> List[Dict]:
     # Max tokens per chunk
     chunker = DocumentChunker(max_tokens=max_tokens)
     all_chunks = []
@@ -80,7 +80,7 @@ def upload_to_pinecone(chunks: List[Dict], batch_size: int = 100):
     return index
 
 # Run the ingestion pipeline
-def run_ingestion(data_dir: str = "data", max_tokens: int = 450):
+def run_ingestion(data_dir: str = "data", max_tokens: int = 1840):
     print("=" * 60)
     print("🚀 Starting Ingestion Pipeline")
     print("=" * 60)
@@ -150,7 +150,7 @@ def delete_document_vectors(file_prefix: str) -> dict:
         return {"success": False, "error": str(e), "deleted_count": 0}
 
 
-def index_single_document(file_path: str, max_tokens: int = 450) -> dict:
+def index_single_document(file_path: str, max_tokens: int = 1840) -> dict:
     """
     Index a single document to Pinecone.
     
@@ -182,7 +182,7 @@ def index_single_document(file_path: str, max_tokens: int = 450) -> dict:
         return {"success": False, "error": str(e)}
 
 
-def reindex_document(file_path: str, max_tokens: int = 450) -> dict:
+def reindex_document(file_path: str, max_tokens: int = 1840) -> dict:
     """
     Re-index a document: delete old vectors then index fresh.
     

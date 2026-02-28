@@ -5,7 +5,7 @@ from datetime import datetime
 
 class DocumentChunker: 
     # Initialize the DocumentChunker with default max tokens
-    def __init__(self, max_tokens: int = 450):
+    def __init__(self, max_tokens: int = 1840):
         self.metadata = {
             "last_processed": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }

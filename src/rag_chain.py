@@ -32,40 +32,48 @@ Anda adalah admin virtual SD Integral Luqman Al Hakim Situbondo.
 
 # --- Suggestion Prompt (separated into system/user roles) ---
 
-SUGGESTION_SYSTEM_PROMPT = """### Role
-Anda adalah pembuat saran pertanyaan lanjutan untuk chatbot informasi SD Integral Luqman Al Hakim.
+SUGGESTION_SYSTEM_PROMPT = """### System
+Anda adalah AI pembuat saran pertanyaan lanjutan untuk chatbot layanan informasi SD Integral Luqman Al Hakim Situbondo. Tugas Anda adalah memberikan maksimal 2 ide pertanyaan lanjutan yang relevan.
 
 ### Instructions
-1. Pertanyaan HARUS bisa dijawab oleh informasi yang ADA di konteks dokumen
-2. JANGAN buat pertanyaan yang jawabannya TIDAK ADA di konteks
-3. Pertanyaan harus terkait topik yang ditanyakan user
-4. Fokus pada informasi di konteks yang BELUM dibahas di jawaban
-5. Maksimal 8 kata per pertanyaan
-6. Tulis tepat 2 pertanyaan, satu per baris, tanpa nomor atau bullet
-7. Jika tidak ada saran relevan, tulis: TIDAK_ADA
+1. Pertanyaan HARUS bisa dijawab oleh informasi yang ADA di bagian "Konteks dokumen".
+2. DILARANG membuat pertanyaan yang jawabannya TIDAK ADA di konteks dokumen atau jika konteks kosong.
+3. DILARANG membuat pertanyaan yang jawabannya SUDAH TERCAKUP di bagian "Jawaban yang diberikan". Pastikan saran Anda menanyakan detail yang BERBEDA.
+4. JANGAN MENEBAK, PERIKSA KEMBALI apakah jawabannya benar-benar tertulis di konteks. Jika tidak tertulis, BUANG pertanyaan tersebut.
+5. Pertanyaan harus singkat, padat, dan jelas (maksimal 10 kata per pertanyaan).
+6. Format keluaran HANYA berupa teks pertanyaan, satu per baris, tanpa nomor, tanpa bullet, tanpa tanda kutip.
+7. Jika SEMUA informasi di konteks sudah habis dibahas di jawaban, atau jika tidak ada saran yang valid, Anda WAJIB mengeluarkan teks: TIDAK_ADA
 
-### Expected Output
-Dua pertanyaan singkat, satu per baris, diakhiri ###
+### Expected Output Format
+[Pertanyaan 1]
+[Pertanyaan 2]
+###
 
 ### Contoh 1
-Konteks: "Syarat masuk: usia minimal 6 tahun, fotocopy akta kelahiran, pas foto 3x4. Biaya pendaftaran Rp200.000."
-Pertanyaan user: Bagaimana proses pendaftaran siswa baru?
-Jawaban: Proses pendaftaran terdiri dari: membayar uang pendaftaran, mengisi formulir, observasi, pengumuman, dan daftar ulang.
-
+Konteks dokumen: "Syarat masuk: usia minimal 6 tahun, fotocopy akta kelahiran, pas foto 3x4. Biaya pendaftaran Rp200.000."
+Pertanyaan user: Bagaimana proses pendaftaran murid baru?
+Jawaban yang diberikan: Proses pendaftaran terdiri dari: membayar uang pendaftaran, mengisi formulir, observasi, pengumuman, dan daftar ulang.
 Saran pertanyaan:
-Apa syarat masuk siswa baru?
-Berapa biaya pendaftaran?
+Apa saja syarat pendaftaran murid baru?
+Berapa biaya pendaftaran murid baru?
 ###
 
 ### Contoh 2
-Konteks: "Visi sekolah: Menjadi sekolah unggulan berbasis Islam. Misi: membentuk karakter Islami, mengembangkan potensi akademik."
-Pertanyaan user: Apa visi sekolah?
-Jawaban: Visi sekolah adalah menjadi sekolah unggulan berbasis Islam.
-
+Konteks dokumen: "Infaq Pembangunan, Sarana Prasarana, Seragam, Kegiatan, Buku, SPP, Tabungan Rihlah"
+Pertanyaan user: Apa saja jenis pembayaran sekolah?
+Jawaban yang diberikan: Jenis pembayaran sekolah adalah Infaq Pembangunan, Sarana Prasarana, Seragam, Kegiatan, Buku, SPP, Tabungan Rihlah
 Saran pertanyaan:
-Apa misi sekolah?
-Bagaimana sekolah membentuk karakter Islami?
-###"""
+Apa kontak bendahara sekolah?
+Bagaimana ketentuan pembayaran biaya sekolah?
+###
+
+### Contoh 3 (PENTING: Jangan menanyakan informasi yang tidak ada di konteks)
+Konteks dokumen: "Ekstrakurikuler wajib di SD Integral Luqman Al Hakim adalah Pramuka. Selain itu ada pilihan Panahan dan Robotik."
+Pertanyaan user: Apa saja ekstrakurikuler di sekolah?
+Jawaban yang diberikan: Ekstrakurikuler wajib adalah Pramuka, sedangkan pilihan lainnya adalah Panahan dan Robotik.
+Saran pertanyaan:
+TIDAK_ADA 
+"""
 
 SUGGESTION_USER_PROMPT = """Konteks dokumen:
 {context}
@@ -78,12 +86,12 @@ Saran pertanyaan:"""
 # Format retrieved documents into context string
 def format_docs(docs: List[Document]) -> str:
     formatted = []
-    for i, doc in enumerate(docs, 1):
+    for doc in docs:
         source = doc.metadata.get("source", "Unknown")
         section = doc.metadata.get("section_title", "")
         content = doc.page_content
         
-        formatted.append(f"[Dokumen {i} - {source}: {section}]\n{content}")
+        formatted.append(f"[{source}: {section}]\n{content}")
     
     return "\n\n---\n\n".join(formatted)
 
@@ -225,7 +233,7 @@ Pertanyaan: {question}"""
                 ],
                 temperature=0.2,
                 max_tokens=600,
-                top_p=0.9,
+                # top_p=0.9,
                 seed=700,
                 stream=False
             )
@@ -279,7 +287,8 @@ Pertanyaan: {question}"""
                 ],
                 temperature=0.2,
                 max_tokens=600,
-                top_p=0.9,
+                # top_p=0.9,
+                seed=700,
                 stream=True 
             )
             
@@ -312,7 +321,7 @@ Pertanyaan: {question}"""
             # Filter docs by relative score threshold (95% of top score)
             if docs:
                 top_score = max(doc.metadata.get("score", 0) for doc in docs)
-                threshold = top_score * 0.95
+                threshold = top_score * 0.85
                 relevant_docs = [doc for doc in docs if doc.metadata.get("score", 0) >= threshold]
                 
                 print(f"🔍 Suggestion filter: top_score={top_score:.4f}, threshold={threshold:.4f}, {len(relevant_docs)}/{len(docs)} docs passed")
@@ -328,7 +337,7 @@ Pertanyaan: {question}"""
             user_prompt = SUGGESTION_USER_PROMPT.format(
                 context=filtered_context[:2000],
                 question=question,
-                answer=answer[:500]
+                answer=answer[:1500]
             )
             
             completion = self.client.chat.completions.create(
@@ -343,9 +352,9 @@ Pertanyaan: {question}"""
                         "content": user_prompt
                     }
                 ],
-                temperature=0.2,
+                temperature=0.0,
                 max_tokens=100,
-                top_p=0.9,
+                # top_p=0.9,
                 stop=["###"],
                 stream=False
             )
@@ -359,12 +368,15 @@ Pertanyaan: {question}"""
             
             # Parse suggestions: split by newline, clean up
             suggestions = []
+            print(f"📨 Raw suggestion response: {repr(response_text)}")
             for line in response_text.split("\n"):
                 line = line.strip()
                 # Remove numbering/bullets if model adds them
                 line = line.lstrip("0123456789.-) ").strip()
-                # Filter empty, too-short lines, and any TIDAK_ADA remnants
-                if line and len(line) > 5 and "TIDAK_ADA" not in line.upper():
+                # Only accept valid question lines (must end with ?)
+                if (line and len(line) > 5 and len(line) <= 80 
+                    and line.endswith("?")
+                    and "TIDAK_ADA" not in line.upper()):
                     suggestions.append(line)
             
             # Return max 2 suggestions

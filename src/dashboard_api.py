@@ -319,7 +319,7 @@ async def upload_file(
     Upload a raw file (PDF, image, etc.) and convert to markdown using LlamaParse.
     The resulting markdown file is saved to data/ directory.
     """
-    from scripts.document_parser import get_parser, SUPPORTED_EXTENSIONS
+    from src.document_parser import get_parser, SUPPORTED_EXTENSIONS
     
     # Check file extension
     file_ext = Path(file.filename).suffix.lower()

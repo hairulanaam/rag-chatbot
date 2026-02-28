@@ -16,7 +16,10 @@ app.include_router(dashboard_router, prefix="/admin")
 # 2. Dashboard static files (/admin/...)
 app.mount("/admin", StaticFiles(directory="dashboard_static", html=True), name="dashboard_static")
 
-# 3. Chainlit chatbot (/chat/...)
+# 3. Public assets (logo, css, etc.) — agar /public/logo.png bisa diakses
+app.mount("/public", StaticFiles(directory="public"), name="public_assets")
+
+# 4. Chainlit chatbot (/chat/...)
 mount_chainlit(app=app, target="app.py", path="/chat")
 
 
