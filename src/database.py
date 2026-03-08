@@ -40,11 +40,34 @@ def init_db():
             status TEXT NOT NULL,
             error_message TEXT,
             retrieval_count INTEGER DEFAULT 0,
+            top_source TEXT,
+            response_time REAL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
+
     conn.commit()
+
+    # Safe migration: add top_source column if it doesn't exist yet
+    try:
+        cursor.execute("ALTER TABLE query_logs ADD COLUMN top_source TEXT")
+        conn.commit()
+    except Exception:
+        pass  # Column already exists, ignore
+
+    # Safe migration: add response_time column if it doesn't exist yet
+    try:
+        cursor.execute("ALTER TABLE query_logs ADD COLUMN response_time REAL")
+        conn.commit()
+    except Exception:
+        pass  # Column already exists, ignore
+
+    # Safe migration: add resolved column if it doesn't exist yet
+    try:
+        cursor.execute("ALTER TABLE query_logs ADD COLUMN resolved INTEGER DEFAULT 0")
+        conn.commit()
+    except Exception:
+        pass  # Column already exists, ignore
     
     # Create default admin if no users exist
     cursor.execute("SELECT COUNT(*) FROM users")
@@ -103,11 +126,8 @@ def verify_user(username: str, password: str) -> bool:
     return password_hash == row["password_hash"]
 
 
-def change_password(username: str, old_password: str, new_password: str) -> dict:
+def change_password(username: str, new_password: str) -> dict:
     """Change user password. Returns dict with success status and message."""
-    if not verify_user(username, old_password):
-        return {"success": False, "message": "Password lama salah"}
-    
     if len(new_password) < 6:
         return {"success": False, "message": "Password baru minimal 6 karakter"}
     
@@ -129,14 +149,15 @@ def change_password(username: str, old_password: str, new_password: str) -> dict
 # ============================================================
 
 def log_query(query: str, response: str = None, status: str = "success",
-              error_message: str = None, retrieval_count: int = 0):
+              error_message: str = None, retrieval_count: int = 0,
+              top_source: str = None, response_time: float = None):
     """Log a chatbot query and response to the database."""
     try:
         conn = get_connection()
         conn.execute(
-            """INSERT INTO query_logs (query, response, status, error_message, retrieval_count)
-               VALUES (?, ?, ?, ?, ?)""",
-            (query, response, status, error_message, retrieval_count)
+            """INSERT INTO query_logs (query, response, status, error_message, retrieval_count, top_source, response_time)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (query, response, status, error_message, retrieval_count, top_source, response_time)
         )
         conn.commit()
         conn.close()
@@ -170,6 +191,9 @@ def get_query_logs(limit: int = 50, offset: int = 0) -> dict:
             "status": row["status"],
             "error_message": row["error_message"],
             "retrieval_count": row["retrieval_count"],
+            "top_source": row["top_source"],
+            "response_time": row["response_time"],
+            "resolved": row["resolved"] if "resolved" in row.keys() else 0,
             "created_at": row["created_at"],
         })
     
@@ -190,13 +214,35 @@ def get_query_stats() -> dict:
     
     cursor.execute("SELECT COUNT(*) FROM query_logs")
     total = cursor.fetchone()[0]
-    conn.close()
     
     stats = {"success": 0, "no_result": 0, "error": 0}
     for row in rows:
         stats[row["status"]] = row["count"]
-    
-    return {"stats": stats, "total": total}
+
+    # Average response time (all queries)
+    cursor.execute("""
+        SELECT ROUND(AVG(response_time), 2) as avg_rt
+        FROM query_logs
+        WHERE response_time IS NOT NULL
+    """)
+    avg_row = cursor.fetchone()
+    avg_response_time = avg_row["avg_rt"] if avg_row and avg_row["avg_rt"] is not None else None
+
+    conn.close()
+    return {"stats": stats, "total": total, "avg_response_time": avg_response_time}
+
+
+def resolve_query_log(log_id: int) -> dict:
+    """Mark a query log as resolved (knowledge has been added)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE query_logs SET resolved = 1 WHERE id = ?", (log_id,))
+    conn.commit()
+    updated = cursor.rowcount
+    conn.close()
+    if updated == 0:
+        return {"success": False, "message": "Log tidak ditemukan"}
+    return {"success": True, "message": "Log ditandai sebagai resolved", "log_id": log_id}
 
 
 def clear_query_logs() -> dict:
@@ -209,3 +255,52 @@ def clear_query_logs() -> dict:
     conn.close()
     return {"success": True, "deleted_count": deleted}
 
+
+def get_daily_stats(days: int = 7) -> dict:
+    """Get query count per day for the last N days."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT DATE(created_at) as day, COUNT(*) as count
+        FROM query_logs
+        WHERE created_at >= DATE('now', ? || ' days')
+        GROUP BY DATE(created_at)
+        ORDER BY day ASC
+    """, (f"-{days}",))
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Build a complete 7-day series (fill missing days with 0)
+    from datetime import date, timedelta
+    result = {}
+    for i in range(days):
+        d = (date.today() - timedelta(days=days - 1 - i)).isoformat()
+        result[d] = 0
+    for row in rows:
+        if row["day"] in result:
+            result[row["day"]] = row["count"]
+
+    return {
+        "days": list(result.keys()),
+        "counts": list(result.values()),
+        "total": sum(result.values()),
+    }
+
+
+def get_topic_stats() -> dict:
+    """Get query frequency grouped by top_source document."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT top_source, COUNT(*) as count
+        FROM query_logs
+        WHERE status = 'success' AND top_source IS NOT NULL AND top_source != ''
+        GROUP BY top_source
+        ORDER BY count DESC
+        LIMIT 8
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return {
+        "topics": [{"source": row["top_source"], "count": row["count"]} for row in rows]
+    }

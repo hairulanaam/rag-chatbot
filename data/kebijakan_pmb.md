@@ -1,8 +1,8 @@
 # Kebijakan Penerimaan Murid Baru
 
-## Pendaftaran Murid Baru
+## Tahapan Pendaftaran Murid Baru
 A. Tahapan Pendaftaran Murid Baru di SD Integral Luqman Al-Hakim Situbondo dilakukan secara daring (online). Berikut adalah tahapan pendaftaran yang harus dilalui oleh calon murid baru:
-1. **Pembayaran Biaya Pendaftaran**: Orang tua/wali mentransfer biaya pendaftaran ke rekening resmi sekolah dan mengirimkan bukti pembayaran kepada kontak admin sekolah.
+1. **Pembayaran Biaya Pendaftaran**: Orang tua/wali mentransfer biaya pendaftaran sebesar Rp. 200.000 ke rekening resmi sekolah dan mengirimkan bukti pembayaran kepada kontak admin sekolah.
 2. **Pengisian Formulir**: Setelah bukti pembayaran diverifikasi, admin sekolah akan mengirimkan User ID, Password, dan tautan (link) untuk login dan mengisi formulir pendaftaran secara online.
 3. **Pelaksanaan Observasi**: Calon murid mengikuti proses observasi sesuai dengan jadwal yang telah ditentukan oleh pihak sekolah.
 4. **Pengumuman Hasil**: Pengumuman hasil observasi calon murid baru akan diinformasikan melalui Grup WhatsApp pendaftaran.

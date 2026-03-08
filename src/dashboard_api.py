@@ -12,12 +12,13 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from src.config import DATA_DIR, DASHBOARD_SECRET_KEY
-from src.database import verify_user, change_password, init_db, get_query_logs, get_query_stats, clear_query_logs
+from src.database import verify_user, change_password, init_db, get_query_logs, get_query_stats, clear_query_logs, get_daily_stats, get_topic_stats, resolve_query_log
 from src.ingestion import (
     index_single_document,
     reindex_document,
     delete_document_vectors,
     get_index_stats,
+    check_documents_indexed,
     run_ingestion,
     get_markdown_files,
     process_documents,
@@ -28,7 +29,7 @@ router = APIRouter()
 
 # JWT Configuration
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_HOURS = 24
+JWT_EXPIRATION_HOURS = 3
 
 
 # ============================================================
@@ -40,7 +41,6 @@ class LoginRequest(BaseModel):
     password: str
 
 class ChangePasswordRequest(BaseModel):
-    old_password: str
     new_password: str
 
 class DocumentContent(BaseModel):
@@ -117,7 +117,7 @@ async def check_auth(username: str = Depends(get_current_user)):
 @router.post("/api/auth/change-password")
 async def api_change_password(data: ChangePasswordRequest, username: str = Depends(get_current_user)):
     """Change user password."""
-    result = change_password(username, data.old_password, data.new_password)
+    result = change_password(username, data.new_password)
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["message"])
     return result
@@ -170,6 +170,18 @@ async def list_documents(username: str = Depends(get_current_user)):
         })
     
     return {"documents": documents}
+
+
+@router.get("/api/documents/indexed")
+async def get_indexed_status(username: str = Depends(get_current_user)):
+    """Check which documents are indexed in Pinecone."""
+    data_path = Path(DATA_DIR)
+    if not data_path.exists():
+        return {"indexed": {}}
+    file_stems = [f.stem for f in data_path.glob("*.md")]
+    if not file_stems:
+        return {"indexed": {}}
+    return check_documents_indexed(file_stems)
 
 
 @router.get("/api/documents/{filename}")
@@ -408,10 +420,31 @@ async def api_get_log_stats(username: str = Depends(get_current_user)):
     return get_query_stats()
 
 
+@router.get("/api/logs/daily")
+async def api_get_daily_stats(username: str = Depends(get_current_user)):
+    """Get query count per day for the last 7 days."""
+    return get_daily_stats(days=7)
+
+
+@router.get("/api/logs/topics")
+async def api_get_topic_stats(username: str = Depends(get_current_user)):
+    """Get query frequency grouped by top_source document."""
+    return get_topic_stats()
+
+
 @router.delete("/api/logs/clear")
 async def api_clear_logs(username: str = Depends(get_current_user)):
     """Delete all query logs."""
     return clear_query_logs()
+
+
+@router.patch("/api/logs/{log_id}/resolve")
+async def api_resolve_log(log_id: int, username: str = Depends(get_current_user)):
+    """Mark a query log as resolved (knowledge added)."""
+    result = resolve_query_log(log_id)
+    if not result["success"]:
+        raise HTTPException(status_code=404, detail=result["message"])
+    return result
 
 
 # ============================================================

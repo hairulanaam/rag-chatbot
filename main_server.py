@@ -11,10 +11,10 @@ init_db()
 app = FastAPI(title="Chatbot Layanan Informasi Sekolah")
 
 # Route dashboard
-app.include_router(dashboard_router, prefix="/admin")
+app.include_router(dashboard_router, prefix="/dashboard")
 
-# 2. Dashboard static files (/admin/...)
-app.mount("/admin", StaticFiles(directory="dashboard_static", html=True), name="dashboard_static")
+# 2. Dashboard static files (/dashboard/...)
+app.mount("/dashboard", StaticFiles(directory="dashboard_static", html=True), name="dashboard_static")
 
 # 3. Public assets (logo, css, etc.) — agar /public/logo.png bisa diakses
 app.mount("/public", StaticFiles(directory="public"), name="public_assets")
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     print("🚀 Starting Server", flush=True)
     print("=" * 60, flush=True)
     print("  📱 Chatbot  : http://localhost:8000/chat", flush=True)
-    print("  🔧 Dashboard: http://localhost:8000/admin", flush=True)
+    print("  🔧 Dashboard: http://localhost:8000/dashboard", flush=True)
     print("=" * 60, flush=True)
 
     uvicorn.run(

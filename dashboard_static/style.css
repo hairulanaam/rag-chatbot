@@ -5,30 +5,30 @@
 
 /* === CSS Variables === */
 :root {
-    --bg-primary: #0f1117;
-    --bg-secondary: #1a1d27;
-    --bg-card: #22253a;
-    --bg-input: #2a2d3e;
-    --bg-hover: #2f3347;
-    --border-color: #333750;
-    --text-primary: #e8eaf0;
-    --text-secondary: #9ca3af;
-    --text-muted: #6b7280;
-    --accent: #6366f1;
-    --accent-hover: #818cf8;
-    --accent-light: rgba(99, 102, 241, 0.15);
+    --bg-primary: #f0f5f1;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-input: #f1f5f2;
+    --bg-hover: #f0fdf4;
+    --border-color: #d4ddd6;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --accent: #16a34a;
+    --accent-hover: #15803d;
+    --accent-light: rgba(22, 163, 74, 0.1);
     --success: #10b981;
-    --success-light: rgba(16, 185, 129, 0.15);
+    --success-light: rgba(16, 185, 129, 0.12);
     --danger: #ef4444;
-    --danger-light: rgba(239, 68, 68, 0.15);
+    --danger-light: rgba(239, 68, 68, 0.1);
     --warning: #f59e0b;
-    --warning-light: rgba(245, 158, 11, 0.15);
+    --warning-light: rgba(245, 158, 11, 0.1);
     --info: #3b82f6;
-    --info-light: rgba(59, 130, 246, 0.15);
+    --info-light: rgba(59, 130, 246, 0.1);
     --radius: 12px;
     --radius-sm: 8px;
-    --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-    --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.2);
+    --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
     --transition: all 0.2s ease;
 }
 
@@ -58,7 +58,7 @@ body {
     justify-content: center;
     min-height: 100vh;
     padding: 20px;
-    background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1040 50%, var(--bg-primary) 100%);
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #ecfdf5 100%);
 }
 
 .login-card {
@@ -116,6 +116,16 @@ body {
 .sidebar-header {
     padding: 24px 20px;
     border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sidebar-header .sidebar-logo {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 
 .sidebar-header h2 {
@@ -129,7 +139,9 @@ body {
 .sidebar-header p {
     font-size: 0.75rem;
     color: var(--text-muted);
-    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .sidebar-nav {
@@ -165,9 +177,12 @@ body {
 }
 
 .nav-item .icon {
-    font-size: 1.1rem;
-    width: 24px;
-    text-align: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .sidebar-footer {
@@ -212,7 +227,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .card-header h3 {
@@ -237,8 +252,8 @@ body {
 }
 
 .stat-card .stat-icon {
-    font-size: 1.5rem;
     margin-bottom: 8px;
+    color: var(--accent);
 }
 
 .stat-card .stat-value {
@@ -334,7 +349,7 @@ textarea:focus {
 .btn-primary:hover {
     background: var(--accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35);
 }
 
 .btn-success {
@@ -574,8 +589,8 @@ tr:hover td {
 }
 
 .upload-zone .upload-icon {
-    font-size: 2.5rem;
     margin-bottom: 12px;
+    color: var(--accent);
 }
 
 .upload-zone p {
@@ -711,8 +726,8 @@ tr:hover td {
 }
 
 .empty-state .empty-icon {
-    font-size: 3rem;
     margin-bottom: 16px;
+    color: var(--text-muted);
 }
 
 .empty-state p {
@@ -763,6 +778,16 @@ tr:hover td {
     white-space: normal;
     overflow: visible;
     word-break: break-word;
+}
+
+.status-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-cell .btn-add-knowledge {
+    flex-shrink: 0;
 }
 
 .stat-item {
@@ -844,4 +869,447 @@ tr:hover td {
 .create-tab-content.active {
     display: block;
     animation: fadeIn 0.2s ease;
+}
+
+/* === Statistik Chatbot — User Engagement === */
+.engagement-layout {
+    display: grid;
+    grid-template-columns: 1fr 160px;
+    gap: 24px;
+    align-items: center;
+}
+
+.engagement-chart-wrap {
+    min-width: 0;
+}
+
+.chart-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.engagement-total-wrap {
+    display: flex;
+    justify-content: center;
+}
+
+.total-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-input);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    text-align: center;
+}
+
+.total-icon {
+    color: var(--accent);
+}
+
+.total-value {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.total-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* === Statistik Chatbot — Analytics Row === */
+.analytics-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.analytics-card {
+    margin-bottom: 0 !important;
+}
+
+.analytics-card h3 {
+    margin-bottom: 16px;
+}
+
+/* Topic Pie */
+.topic-pie-wrap {
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+}
+
+.pie-layout {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.pie-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 120px;
+}
+
+.pie-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+}
+
+.pie-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.pie-name {
+    color: var(--text-secondary);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pie-count {
+    display: inline-block;
+    background: rgba(22, 163, 74, 0.1);
+    color: var(--accent);
+    font-size: 0.77rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Success Rate */
+.success-rate-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.rate-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rate-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.rate-pct {
+    font-weight: 700;
+}
+
+.pct-bar-bg {
+    background: var(--bg-input);
+    border-radius: 99px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.pct-bar {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.6s ease;
+}
+
+.pct-success {
+    background: var(--success);
+}
+
+.pct-warning {
+    background: var(--warning);
+}
+
+.pct-danger {
+    background: var(--danger);
+}
+
+.success-text {
+    color: var(--success);
+}
+
+.warning-text {
+    color: var(--warning);
+}
+
+.danger-text {
+    color: var(--danger);
+}
+
+/* Source Badge (Dokumen column) */
+.source-badge {
+    display: inline-block;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+
+@media (max-width: 900px) {
+    .analytics-row {
+        grid-template-columns: 1fr;
+    }
+
+    .engagement-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .engagement-total-wrap {
+        justify-content: flex-start;
+    }
+}
+
+/* Response time badge in table */
+.rt-badge {
+    display: inline-block;
+    background: rgba(22, 163, 74, 0.1);
+    color: var(--accent);
+    font-size: 0.77rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Avg response time row in stats card */
+.avg-rt-item {
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 4px;
+}
+
+/* Document index status badges */
+.index-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+}
+
+.index-active {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.index-inactive {
+    background: var(--bg-input);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+}
+
+.index-unknown {
+    color: var(--text-muted);
+}
+
+/* === Logo === */
+.sidebar-logo {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 6px;
+}
+
+.login-logo {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    margin: 0 auto 16px;
+    display: block;
+    border-radius: 12px;
+}
+
+/* === Lucide Icon Adjustments === */
+.btn svg.lucide {
+    width: 16px;
+    height: 16px;
+}
+
+.stat-icon svg.lucide {
+    width: 24px;
+    height: 24px;
+}
+
+.upload-icon svg.lucide {
+    width: 40px;
+    height: 40px;
+}
+
+.total-icon svg.lucide {
+    width: 28px;
+    height: 28px;
+}
+
+.empty-icon svg.lucide {
+    width: 48px;
+    height: 48px;
+}
+
+.create-tab svg.lucide {
+    width: 14px;
+    height: 14px;
+}
+
+.mobile-toggle svg.lucide {
+    width: 20px;
+    height: 20px;
+}
+
+/* === Knowledge Modal (Tambah Knowledge dari Pertanyaan Tidak Terjawab) === */
+
+.knowledge-modal {
+    width: 95%;
+    max-width: 620px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+}
+
+.knowledge-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.knowledge-modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.05rem;
+    margin-bottom: 0;
+}
+
+.knowledge-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.knowledge-modal-body .form-group {
+    margin-bottom: 16px;
+}
+
+.knowledge-modal-body textarea {
+    min-height: 140px;
+}
+
+.knowledge-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-input);
+}
+
+.knowledge-question-preview {
+    background: var(--warning-light);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+}
+
+.knowledge-question-preview label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--warning);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.knowledge-question-preview .question-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.knowledge-doc-toggle {
+    margin-bottom: 8px;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.toggle-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* Action button in logs table */
+.btn-add-knowledge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    background: var(--warning-light);
+    color: var(--warning);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.btn-add-knowledge:hover {
+    background: var(--warning);
+    color: white;
+    border-color: var(--warning);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* Resolved badge for questions with added knowledge */
+.badge-resolved {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    font-size: 0.65rem;
+    padding: 1px 6px;
 }

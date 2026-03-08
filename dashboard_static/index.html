@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Chatbot Admin</title>
     <meta name="description" content="Dashboard pengelolaan data chatbot layanan informasi sekolah">
-    <link rel="stylesheet" href="/admin/style.css">
+    <link rel="stylesheet" href="/dashboard/style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 
 <body>
@@ -19,8 +20,9 @@
     <!-- ============================================================ -->
     <div class="login-container" id="loginPage">
         <div class="login-card">
-            <h1>📚 Dashboard Admin</h1>
-            <p class="subtitle">Chatbot Layanan Informasi Sekolah</p>
+            <img src="/public/logo.png" alt="Logo Sekolah" class="login-logo">
+            <h1>Dashboard Admin</h1>
+            <p class="subtitle">Chatbot SD Integral Luqman Al Hakim Situbondo</p>
 
             <form id="loginForm">
                 <div class="form-group">
@@ -43,34 +45,37 @@
     <!-- ============================================================ -->
     <!-- DASHBOARD -->
     <!-- ============================================================ -->
-    <button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
 
     <div class="dashboard" id="dashboard">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h2>📚 Dashboard Admin</h2>
-                <p>Chatbot Informasi Sekolah</p>
+                <img src="/public/logo.png" alt="Logo Sekolah" class="sidebar-logo">
+                <div class="sidebar-header-text">
+                    <h2>Dashboard Admin</h2>
+                    <p>Chatbot Layanan Informasi</p>
+                </div>
             </div>
 
             <nav class="sidebar-nav">
                 <button class="nav-item active" data-page="logs" onclick="navigateTo('logs')">
-                    <span class="icon">📋</span> Log Query
+                    <i data-lucide="bar-chart-3" class="icon"></i> Statistik
                 </button>
                 <button class="nav-item" data-page="documents" onclick="navigateTo('documents')">
-                    <span class="icon">📄</span> Dokumen
+                    <i data-lucide="file-text" class="icon"></i> Dokumen
                 </button>
                 <button class="nav-item" data-page="settings" onclick="navigateTo('settings')">
-                    <span class="icon">⚙️</span> Pengaturan
+                    <i data-lucide="settings" class="icon"></i> Ubah Password
                 </button>
             </nav>
 
             <div class="sidebar-footer">
                 <button class="nav-item" onclick="navigateTo('chatbot')" title="Buka Chatbot">
-                    <span class="icon">💬</span> Buka Chatbot
+                    <i data-lucide="message-circle" class="icon"></i> Buka Chatbot
                 </button>
                 <button class="nav-item" onclick="doLogout()" style="color: var(--danger);">
-                    <span class="icon">🚪</span> Logout
+                    <i data-lucide="log-out" class="icon"></i> Logout
                 </button>
             </div>
         </aside>
@@ -78,47 +83,67 @@
         <!-- Main Content -->
         <main class="main-content">
 
-            <!-- ===== QUERY LOGS PAGE (DEFAULT) ===== -->
+            <!-- ===== STATISTIK CHATBOT PAGE (DEFAULT) ===== -->
             <div class="page active" id="page-logs">
                 <div class="page-header">
-                    <h1>📋 Log Query</h1>
-                    <p>Riwayat pertanyaan yang masuk ke chatbot</p>
+                    <h1>Statistik Chatbot</h1>
                 </div>
 
-                <!-- Chart + Stats Row -->
-                <div class="log-overview">
-                    <div class="card chart-card">
-                        <h3>Statistik Respons</h3>
-                        <div id="logChart" class="chart-container">
-                            <p style="color: var(--text-muted);">Memuat data...</p>
-                        </div>
+                <!-- Section 1: User Engagement -->
+                <div class="card stat-section" id="engagementCard">
+                    <div class="card-header">
+                        <h3>Interaksi Pengguna</h3>
+                        <button class="btn btn-outline btn-sm" onclick="loadDailyStats(); loadLogStats(); loadLogs()"><i
+                                data-lucide="refresh-cw"></i>
+                            Refresh</button>
                     </div>
-                    <div class="card stats-card">
-                        <h3>Ringkasan</h3>
-                        <div id="logStatsInfo">
-                            <p style="color: var(--text-muted);">Memuat data...</p>
+                    <div class="engagement-layout">
+                        <div class="engagement-chart-wrap">
+                            <p class="chart-label">Pertanyaan 7 Hari Terakhir</p>
+                            <div id="lineChartContainer"></div>
+                        </div>
+                        <div class="engagement-total-wrap">
+                            <div class="total-box">
+                                <div class="total-icon"><i data-lucide="message-square"></i></div>
+                                <div class="total-value" id="engagementTotal">—</div>
+                                <div class="total-label">Total Pertanyaan</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Logs Table -->
+                <!-- Section 2: Content Analytics -->
+                <div class="analytics-row">
+                    <div class="card analytics-card">
+                        <h3>Top Topik</h3>
+                        <div id="topicPieContainer" class="topic-pie-wrap">
+                            <p style="color:var(--text-muted)">Memuat...</p>
+                        </div>
+                    </div>
+                    <div class="card analytics-card">
+                        <h3>Statistik Pertanyaan</h3>
+                        <div id="successRateContainer" class="success-rate-wrap">
+                            <p style="color:var(--text-muted)">Memuat...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Riwayat Interaksi -->
                 <div class="card">
                     <div class="card-header">
-                        <h3>Riwayat Query</h3>
-                        <div class="btn-group">
-                            <button class="btn btn-outline btn-sm" onclick="loadLogs(); loadLogStats()">🔄 Refresh</button>
-                            <button class="btn btn-danger btn-sm" onclick="clearLogs()">🗑️ Hapus Semua</button>
-                        </div>
+                        <h3>Riwayat Interaksi</h3>
+                        <button class="btn btn-danger btn-sm" onclick="clearLogs()"><i data-lucide="trash-2"></i> Hapus
+                            Semua</button>
                     </div>
                     <div class="table-container">
                         <table>
                             <thead>
                                 <tr>
                                     <th style="width:40px">#</th>
-                                    <th>Query</th>
-                                    <th>Response</th>
+                                    <th>Pertanyaan</th>
+                                    <th>Dokumen</th>
                                     <th style="width:90px">Status</th>
-                                    <th style="width:50px">Docs</th>
+                                    <th style="width:90px">Respons</th>
                                     <th style="width:140px">Waktu</th>
                                 </tr>
                             </thead>
@@ -134,10 +159,11 @@
                 </div>
             </div>
 
+
             <!-- ===== DOCUMENTS PAGE ===== -->
             <div class="page" id="page-documents">
                 <div class="page-header">
-                    <h1>📄 Dokumen</h1>
+                    <h1>Dokumen</h1>
                     <p>Kelola dokumen informasi chatbot</p>
                 </div>
 
@@ -147,18 +173,23 @@
                 <div class="card" id="createSection" style="display: none;">
                     <div class="card-header">
                         <div class="create-tabs">
-                            <button class="create-tab active" id="tabBtnUpload" onclick="switchCreateTab('upload')">📤 Upload File</button>
-                            <button class="create-tab" id="tabBtnManual" onclick="switchCreateTab('manual')">✏️ Buat Manual</button>
+                            <button class="create-tab active" id="tabBtnUpload" onclick="switchCreateTab('upload')"><i
+                                    data-lucide="upload"></i>
+                                Upload File</button>
+                            <button class="create-tab" id="tabBtnManual" onclick="switchCreateTab('manual')"><i
+                                    data-lucide="pen-line"></i> Buat
+                                Manual</button>
                         </div>
-                        <button class="btn btn-outline btn-sm" onclick="toggleCreateSection()">✕ Tutup</button>
+                        <button class="btn btn-outline btn-sm" onclick="toggleCreateSection()"><i data-lucide="x"></i>
+                            Tutup</button>
                     </div>
 
                     <!-- Upload Tab -->
                     <div class="create-tab-content active" id="tab-upload">
                         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-                            <div class="upload-icon">📁</div>
+                            <div class="upload-icon"><i data-lucide="folder-open"></i></div>
                             <p>Klik atau drag & drop file di sini</p>
-                            <p class="upload-hint">Format: PDF, JPG, PNG, DOCX, PPTX, XLSX, TXT</p>
+                            <p class="upload-hint">Format: PDF, JPG, PNG, DOCX, TXT</p>
                         </div>
                         <input type="file" id="fileInput" style="display: none;"
                             accept=".pdf,.jpg,.jpeg,.png,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.html,.htm,.txt,.bmp,.tiff,.gif,.webp">
@@ -178,8 +209,10 @@
                                 placeholder="# Judul Dokumen&#10;&#10;## Sub Judul&#10;&#10;Isi konten informasi di sini..."></textarea>
                         </div>
                         <div class="btn-group">
-                            <button class="btn btn-primary" onclick="createDocument(false)">📄 Simpan</button>
-                            <button class="btn btn-success" onclick="createDocument(true)">📄 Simpan & Index</button>
+                            <button class="btn btn-primary" onclick="createDocument(false)"><i data-lucide="save"></i>
+                                Simpan</button>
+                            <button class="btn btn-success" onclick="createDocument(true)"><i data-lucide="save"></i>
+                                Simpan & Index</button>
                         </div>
                     </div>
                 </div>
@@ -189,9 +222,12 @@
                     <div class="card-header">
                         <h3>Daftar Dokumen</h3>
                         <div class="btn-group">
-                            <button class="btn btn-primary btn-sm" onclick="toggleCreateSection()">➕ Tambah</button>
-                            <button class="btn btn-outline btn-sm" onclick="loadDocuments()">🔄 Refresh</button>
-                            <button class="btn btn-success btn-sm" onclick="indexAllDocuments()">⚡ Index Semua</button>
+                            <button class="btn btn-primary btn-sm" onclick="toggleCreateSection()"><i
+                                    data-lucide="plus"></i> Tambah</button>
+                            <button class="btn btn-outline btn-sm" onclick="loadDocuments()"><i
+                                    data-lucide="refresh-cw"></i> Refresh</button>
+                            <button class="btn btn-success btn-sm" onclick="indexAllDocuments()"><i
+                                    data-lucide="zap"></i> Index Semua</button>
                         </div>
                     </div>
                     <div class="table-container">
@@ -201,6 +237,7 @@
                                     <th>Nama File</th>
                                     <th>Ukuran</th>
                                     <th>Terakhir Diubah</th>
+                                    <th style="width:120px">Status Index</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -218,7 +255,7 @@
             <!-- ===== EDIT DOCUMENT PAGE ===== -->
             <div class="page" id="page-edit">
                 <div class="page-header">
-                    <h1>✏️ Edit Dokumen</h1>
+                    <h1>Edit Dokumen</h1>
                     <p id="editDocName">-</p>
                 </div>
                 <div class="card">
@@ -227,9 +264,12 @@
                         <textarea id="editContent" rows="20"></textarea>
                     </div>
                     <div class="btn-group">
-                        <button class="btn btn-primary" onclick="saveDocument()">💾 Simpan</button>
-                        <button class="btn btn-success" onclick="saveAndIndex()">💾 Simpan & Index</button>
-                        <button class="btn btn-outline" onclick="navigateTo('documents')">← Kembali</button>
+                        <button class="btn btn-primary" onclick="saveDocument()"><i data-lucide="save"></i>
+                            Simpan</button>
+                        <button class="btn btn-success" onclick="saveAndIndex()"><i data-lucide="save"></i> Simpan &
+                            Index</button>
+                        <button class="btn btn-outline" onclick="navigateTo('documents')"><i
+                                data-lucide="arrow-left"></i> Kembali</button>
                     </div>
                 </div>
             </div>
@@ -237,16 +277,12 @@
             <!-- ===== SETTINGS PAGE ===== -->
             <div class="page" id="page-settings">
                 <div class="page-header">
-                    <h1>⚙️ Pengaturan</h1>
+                    <h1>Pengaturan</h1>
                     <p>Pengaturan akun admin</p>
                 </div>
                 <div class="card">
                     <h3 style="margin-bottom: 20px;">Ganti Password</h3>
                     <form id="changePasswordForm">
-                        <div class="form-group">
-                            <label for="oldPassword">Password Lama</label>
-                            <input type="password" id="oldPassword" placeholder="Masukkan password lama" required>
-                        </div>
                         <div class="form-group">
                             <label for="newPassword">Password Baru</label>
                             <input type="password" id="newPassword"
@@ -256,12 +292,58 @@
                             <label for="confirmPassword">Konfirmasi Password Baru</label>
                             <input type="password" id="confirmPassword" placeholder="Ulangi password baru" required>
                         </div>
-                        <button type="submit" class="btn btn-primary">🔑 Ubah Password</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="key-round"></i> Ubah
+                            Password</button>
                     </form>
                 </div>
             </div>
 
         </main>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODAL: TAMBAH KNOWLEDGE DARI PERTANYAAN TIDAK TERJAWAB -->
+    <!-- ============================================================ -->
+    <div class="modal-overlay" id="knowledgeModal" style="display:none">
+        <div class="modal knowledge-modal">
+            <div class="knowledge-modal-header">
+                <h3><i data-lucide="book-plus" style="width:20px;height:20px"></i> Tambah Informasi Baru</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeKnowledgeModal()" title="Tutup"><i data-lucide="x"></i></button>
+            </div>
+            <div class="knowledge-modal-body">
+                <div class="knowledge-question-preview">
+                    <label>Pertanyaan yang Tidak Terjawab</label>
+                    <div class="question-text" id="knowledgeQuestion">—</div>
+                </div>
+                <div class="form-group">
+                    <label for="knowledgeDocTarget">Dokumen Tujuan</label>
+                    <div class="knowledge-doc-toggle">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="knowledgeNewDocToggle" onchange="toggleKnowledgeDocMode()">
+                            <span>Buat dokumen baru</span>
+                        </label>
+                    </div>
+                    <select id="knowledgeDocTarget" onchange="onKnowledgeDocSelect()">
+                        <option value="">Memuat dokumen...</option>
+                    </select>
+                    <input type="text" id="knowledgeNewDocName" placeholder="nama_dokumen_baru" style="display:none">
+                    <small style="color: var(--text-muted); margin-top: 4px; display: none;" id="knowledgeNewDocHint"></small>
+                </div>
+                <div class="form-group">
+                    <label for="knowledgeSectionTitle">Judul Section</label>
+                    <input type="text" id="knowledgeSectionTitle" placeholder="contoh: Informasi Pendaftaran">
+                    <small style="color: var(--text-muted); margin-top: 4px; display: block;">Akan ditambahkan sebagai heading ## di dokumen</small>
+                </div>
+                <div class="form-group">
+                    <label for="knowledgeContent">Konten Jawaban</label>
+                    <textarea id="knowledgeContent" rows="8" placeholder="Tulis informasi/jawaban yang ingin ditambahkan sebagai informasi baru..."></textarea>
+                </div>
+            </div>
+            <div class="knowledge-modal-footer">
+                <!-- <button class="btn btn-outline" onclick="closeKnowledgeModal()">Batal</button> -->
+                <button class="btn btn-success" onclick="submitKnowledge(true)"><i data-lucide="zap"></i> Simpan & Index</button>
+            </div>
+        </div>
     </div>
 
     <!-- ============================================================ -->
@@ -274,7 +356,8 @@
         </div>
     </div>
 
-    <script src="/admin/app.js"></script>
+    <script src="/dashboard/app.js"></script>
+    <script>lucide.createIcons();</script>
 </body>
 
 </html>

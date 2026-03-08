@@ -231,5 +231,29 @@ def get_index_stats() -> dict:
         return {"success": False, "error": str(e)}
 
 
+def check_documents_indexed(file_stems: list) -> dict:
+    """
+    Check which documents from a given list are indexed in Pinecone.
+    Returns dict: {file_stem: bool} — True if indexed, False if not.
+    """
+    try:
+        index = _get_pinecone_index()
+        result = {}
+        for stem in file_stems:
+            prefix = f"{stem}_section_"
+            # list() returns an iterator of ID lists — any result means indexed
+            has_vectors = False
+            for ids in index.list(prefix=prefix):
+                if ids:
+                    has_vectors = True
+                    break
+            result[stem] = has_vectors
+        return {"success": True, "indexed": result}
+    except Exception as e:
+        print(f"❌ Error checking index status: {e}")
+        # Return all as unknown on error
+        return {"success": False, "indexed": {stem: None for stem in file_stems}}
+
+
 if __name__ == "__main__":
     run_ingestion()

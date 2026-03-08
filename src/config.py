@@ -18,6 +18,19 @@ LLM_MODEL_NAME = "llama-3.3-70b-versatile"
 SUGGESTION_MODEL_NAME = "llama-3.1-8b-instant"
 STT_MODEL_NAME = "whisper-large-v3-turbo"
 
+# Fallback Detection — frasa yang menandakan LLM tidak bisa menjawab
+# Dicocokkan (case-insensitive) terhadap respons LLM setelah generate
+FALLBACK_PHRASES = [
+    "informasi tidak tersedia",
+    "informasi tersebut tidak tersedia",
+    "tidak menemukan informasi",
+    "tidak memiliki informasi",
+    "di luar cakupan",
+    "tidak ada informasi tentang",
+    "tidak tersedia dalam konteks",
+    "tidak dapat menemukan",
+]
+
 # Dashboard Configuration
 BASE_DIR = Path(__file__).resolve().parent.parent
 DASHBOARD_SECRET_KEY = os.getenv("DASHBOARD_SECRET_KEY", "change-this-secret-key-in-production")

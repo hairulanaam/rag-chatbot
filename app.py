@@ -1,9 +1,11 @@
 import chainlit as cl
 import numpy as np
 import audioop
+import time
 from src.rag_chain import PineconeRetriever, GroqLLM, format_docs, RateLimitError
 from src.database import log_query
 from src.audio_handler import AudioHandler, SILENCE_THRESHOLD, SILENCE_TIMEOUT, MIN_AUDIO_DURATION
+from src.config import FALLBACK_PHRASES
 
 # Configuration
 USE_STREAMING = True  # Set False untuk non-streaming mode
@@ -175,8 +177,8 @@ async def on_audio_end():
         
     except Exception as e:
         print(f"Error transcribing audio: {str(e)}")
-        msg.content = "⚠️ Terjadi kesalahan saat memproses audio. Silakan coba lagi."
-        await msg.update()
+        error_msg = cl.Message(content="⚠️ Terjadi kesalahan saat memproses audio. Silakan coba lagi.")
+        await error_msg.send()
 
 
 # Question Processing
@@ -192,6 +194,7 @@ async def process_question(user_question: str, msg: cl.Message = None):
         return
     
     # Create new message if not provided
+    start_time = time.time()
     if msg is None:
         loading_html = '<span class="loading-text"><span class="loading-spinner"></span>Mencari dokumen<span class="loading-dots"></span></span>'
         msg = cl.Message(content=loading_html)
@@ -212,7 +215,8 @@ async def process_question(user_question: str, msg: cl.Message = None):
                           "pihak sekolah secara langsung.")
             msg.content = no_result_msg
             await msg.update()
-            log_query(user_question, no_result_msg, "no_result", "Tidak ada dokumen relevan", 0)
+            log_query(user_question, no_result_msg, "no_result", "Tidak ada dokumen relevan", 0,
+                      response_time=round(time.time() - start_time, 2))
             return
         
         # Format context
@@ -234,8 +238,21 @@ async def process_question(user_question: str, msg: cl.Message = None):
         # Final update
         await msg.update()
         
-        # Log successful query
-        log_query(user_question, full_response, "success", None, len(docs))
+        # Extract top source from first retrieved document
+        top_source = docs[0].metadata.get("source", None) if docs else None
+        
+        # Deteksi fallback: cek apakah LLM menjawab "informasi tidak tersedia" dll.
+        status = "success"
+        response_lower = full_response.lower()
+        for phrase in FALLBACK_PHRASES:
+            if phrase in response_lower:
+                status = "no_result"
+                print(f"⚠️ Fallback detected: '{phrase}' ditemukan dalam respons LLM → status diubah ke 'no_result'")
+                break
+        
+        # Log query dengan status yang sudah dikoreksi
+        log_query(user_question, full_response, status, None, len(docs), top_source,
+                  response_time=round(time.time() - start_time, 2))
         
         # Generate context-aware query suggestions
         try:
@@ -287,7 +304,8 @@ async def process_question(user_question: str, msg: cl.Message = None):
                       f"Silakan coba lagi beberapa saat lagi.")
         msg.content = error_content
         await msg.update()
-        log_query(user_question, error_content, "error", f"Rate limit: {str(e)}", 0)
+        log_query(user_question, error_content, "error", f"Rate limit: {str(e)}", 0,
+                  response_time=round(time.time() - start_time, 2))
         
     except Exception as e:
         print(f"Error processing message: {str(e)}")
@@ -295,7 +313,8 @@ async def process_question(user_question: str, msg: cl.Message = None):
                       "Silakan coba beberapa saat lagi.")
         msg.content = error_content
         await msg.update()
-        log_query(user_question, error_content, "error", str(e), 0)
+        log_query(user_question, error_content, "error", str(e), 0,
+                  response_time=round(time.time() - start_time, 2))
 
 
 # Handle user text messages 
