@@ -112,11 +112,13 @@ async function checkAuth() {
 function showLogin() {
     document.getElementById('loginPage').style.display = 'flex';
     document.getElementById('dashboard').classList.remove('active');
+    stopAutoRefresh();
 }
 
 function showDashboard() {
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('dashboard').classList.add('active');
+    startAutoRefresh();
 }
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -186,12 +188,24 @@ function navigateTo(page) {
     if (page === 'documents') loadDocuments();
     if (page === 'logs') { loadLogs(); loadLogStats(); loadDailyStats(); }
 
+    // Track current page and restart auto-refresh for this page
+    currentPage = page;
+    startAutoRefresh();
+
     // Close mobile sidebar
-    document.getElementById('sidebar').classList.remove('open');
+    closeSidebar();
 }
 
 function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('open');
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    sidebar.classList.toggle('open');
+    backdrop.classList.toggle('active');
+}
+
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarBackdrop').classList.remove('active');
 }
 
 // ============================================================
@@ -982,7 +996,73 @@ function formatSize(bytes) {
 }
 
 // ============================================================
+// Auto-Refresh System
+// ============================================================
+
+const AUTO_REFRESH_INTERVAL = 15000; // 15 seconds
+let autoRefreshTimer = null;
+let currentPage = 'logs'; // track current active page
+
+/**
+ * Start auto-refresh polling for the current page.
+ * Only the active page is polled. Timer is cleared and re-created on page change.
+ */
+function startAutoRefresh() {
+    stopAutoRefresh();
+
+    autoRefreshTimer = setInterval(() => {
+        // Only refresh if the tab is visible
+        if (document.hidden) return;
+
+        silentRefresh();
+    }, AUTO_REFRESH_INTERVAL);
+}
+
+/**
+ * Stop auto-refresh polling.
+ */
+function stopAutoRefresh() {
+    if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+    }
+}
+
+/**
+ * Silently refresh data for the current active page.
+ * Does NOT show errors as toasts (to avoid spamming on network issues).
+ */
+async function silentRefresh() {
+    try {
+        if (currentPage === 'logs') {
+            await Promise.all([
+                loadLogs(),
+                loadLogStats(),
+                loadDailyStats(),
+            ]);
+        } else if (currentPage === 'documents') {
+            await loadDocuments();
+        }
+    } catch (err) {
+        // Silent fail — don't show toast for auto-refresh errors
+        console.warn('Auto-refresh failed:', err.message);
+    }
+}
+
+// Pause auto-refresh when tab is hidden, resume when visible
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        stopAutoRefresh();
+    } else {
+        // Resume: immediately refresh and restart polling
+        silentRefresh();
+        startAutoRefresh();
+    }
+});
+
+// ============================================================
 // Init
 // ============================================================
 
 checkAuth();
+

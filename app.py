@@ -1,6 +1,5 @@
 import chainlit as cl
 import numpy as np
-import audioop
 import time
 from src.rag_chain import PineconeRetriever, GroqLLM, format_docs, RateLimitError
 from src.database import log_query
@@ -74,6 +73,7 @@ async def on_audio_start():
     cl.user_session.set("silent_duration_ms", 0)
     cl.user_session.set("is_speaking", False)
     cl.user_session.set("last_elapsed_time", 0)
+    cl.user_session.set("audio_auto_ended", False)
     print("🎤 Audio recording started")
     return True
 
@@ -81,11 +81,16 @@ async def on_audio_start():
 @cl.on_audio_chunk
 async def on_audio_chunk(chunk: cl.InputAudioChunk):
     """Process incoming audio chunks with silence detection"""
+    # Skip if already auto-ended by silence detection
+    if cl.user_session.get("audio_auto_ended"):
+        return
+    
     audio_chunks = cl.user_session.get("audio_chunks")
     
+    # Convert chunk data to numpy array (used for both storage and energy calculation)
+    audio_chunk = np.frombuffer(chunk.data, dtype=np.int16)
+    
     if audio_chunks is not None:
-        # Convert chunk data to numpy array
-        audio_chunk = np.frombuffer(chunk.data, dtype=np.int16)
         audio_chunks.append(audio_chunk)
     
     # If this is the first chunk, initialize timers
@@ -103,17 +108,20 @@ async def on_audio_chunk(chunk: cl.InputAudioChunk):
     time_diff_ms = chunk.elapsedTime - last_elapsed_time
     cl.user_session.set("last_elapsed_time", chunk.elapsedTime)
     
-    # Compute audio energy (RMS)
-    audio_energy = audioop.rms(chunk.data, 2)  # 16-bit audio (2 bytes per sample)
+    # Compute audio energy (RMS) using NumPy — replaces deprecated audioop
+    audio_energy = int(np.sqrt(np.mean(audio_chunk.astype(np.float64) ** 2)))
     
     if audio_energy < SILENCE_THRESHOLD:
         # Audio is silent
         silent_duration_ms += time_diff_ms
         cl.user_session.set("silent_duration_ms", silent_duration_ms)
         
-        # Auto-end if silence exceeds timeout (optional: can let on_audio_end handle it)
+        # Auto-process if silence exceeds timeout after user has spoken
         if silent_duration_ms >= SILENCE_TIMEOUT and is_speaking:
             cl.user_session.set("is_speaking", False)
+            cl.user_session.set("audio_auto_ended", True)
+            print("🔇 Silence detected after speech — auto-processing audio")
+            await process_audio_input()
     else:
         # Audio is active, reset silence timer
         cl.user_session.set("silent_duration_ms", 0)
@@ -121,9 +129,9 @@ async def on_audio_chunk(chunk: cl.InputAudioChunk):
             cl.user_session.set("is_speaking", True)
 
 
-@cl.on_audio_end
-async def on_audio_end():
-    """Process completed audio recording - transcribe and send to RAG"""
+# Shared audio processing function (used by both silence auto-end and manual stop)
+async def process_audio_input():
+    """Process recorded audio - transcribe and send to RAG pipeline"""
     audio_chunks = cl.user_session.get("audio_chunks")
     audio_handler = cl.user_session.get("audio_handler")
     
@@ -179,6 +187,17 @@ async def on_audio_end():
         print(f"Error transcribing audio: {str(e)}")
         error_msg = cl.Message(content="⚠️ Terjadi kesalahan saat memproses audio. Silakan coba lagi.")
         await error_msg.send()
+
+
+@cl.on_audio_end
+async def on_audio_end():
+    """Process completed audio recording - transcribe and send to RAG"""
+    # Skip if already auto-processed by silence detection
+    if cl.user_session.get("audio_auto_ended"):
+        print("🔇 Audio already auto-processed by silence detection, skipping on_audio_end")
+        return
+    
+    await process_audio_input()
 
 
 # Question Processing
@@ -242,12 +261,14 @@ async def process_question(user_question: str, msg: cl.Message = None):
         top_source = docs[0].metadata.get("source", None) if docs else None
         
         # Deteksi fallback: cek apakah LLM menjawab "informasi tidak tersedia" dll.
+        # Hanya cek 200 karakter pertama untuk menghindari false positive
+        # (frasa fallback di tengah/akhir jawaban valid tidak dianggap fallback)
         status = "success"
-        response_lower = full_response.lower()
+        response_start = full_response[:50].lower()
         for phrase in FALLBACK_PHRASES:
-            if phrase in response_lower:
+            if phrase in response_start:
                 status = "no_result"
-                print(f"⚠️ Fallback detected: '{phrase}' ditemukan dalam respons LLM → status diubah ke 'no_result'")
+                print(f"⚠️ Fallback detected: '{phrase}' ditemukan di awal respons LLM → status diubah ke 'no_result'")
                 break
         
         # Log query dengan status yang sudah dikoreksi

@@ -21,9 +21,9 @@
 - Provinsi: Jawa Timur
 
 ## Visi dan Misi Sekolah
-Visi: Terwujudnya generasi masa depan yang taqwa, cerdas dan mandiri.
+**Visi**: Terwujudnya generasi masa depan yang taqwa, cerdas dan mandiri.
 
-Misi:
+**Misi**:
 1. Menyelenggarakan lembaga pendidikan integral yang memadukan aspek ruhiyah, aqliyah dan jismiyah.
 2. Mensinergikan aspek sekolah, keluarga, serta mempertemukan teori dengan realita kehidupan di masyarakat.
 3. Mengutamakan keteladanan dan kasih sayang dalam proses pendidikan.

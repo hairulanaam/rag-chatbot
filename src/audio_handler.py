@@ -5,8 +5,8 @@ from groq import Groq
 from src.config import GROQ_API_KEY, STT_MODEL_NAME
 
 # Configuration for silence detection
-SILENCE_THRESHOLD = 3500  # Adjust for quieter/louder environments
-SILENCE_TIMEOUT = 1300.0  # ms of silence to consider turn finished
+SILENCE_THRESHOLD = 2500  # Adjust for quieter/louder environments
+SILENCE_TIMEOUT = 2000.0  # ms of silence to consider turn finished
 MIN_AUDIO_DURATION = 1.0  # Minimum audio duration in seconds
 
 

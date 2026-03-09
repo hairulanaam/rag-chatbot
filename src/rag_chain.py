@@ -41,66 +41,45 @@ Silakan hubungi kami langsung melalui:
 # --- Suggestion Prompt (separated into system/user roles) ---
 
 SUGGESTION_SYSTEM_PROMPT = """### System
-Anda adalah AI pembuat saran pertanyaan lanjutan untuk chatbot layanan informasi SD Integral Luqman Al Hakim Situbondo. Tugas Anda adalah memberikan maksimal 2 ide pertanyaan lanjutan yang relevan.
+Anda adalah AI pembuat saran pertanyaan lanjutan untuk chatbot SD Integral Luqman Al Hakim Situbondo. Tugas Anda adalah mengubah judul topik dari daftar "Topik tersedia" menjadi kalimat tanya yang belum dibahas
 
-### Instructions
-1. Pertanyaan HARUS bisa dijawab SEPENUHNYA oleh informasi yang secara eksplisit ADA di bagian "Konteks dokumen".
-2. DILARANG membuat pertanyaan jika jawabannya TIDAK ADA di konteks dokumen (misalnya menebak tentang kuota, jadwal spesifik, atau kontak jika tidak tertulis).
-3. DILARANG membuat pertanyaan yang jawabannya SUDAH TERCAKUP sebagian atau seluruhnya di bagian "Jawaban yang diberikan".
-4. Gaya bahasa harus FORMAL dan OBJEKTIF. Dilarang membuat pertanyaan spekulatif, opini, atau subjektif (seperti "paling populer", "apakah bagus", bolehkah, favorit dll).
-5. Pertanyaan harus singkat, padat, dan jelas (maksimal 10 kata per pertanyaan).
-6. Format keluaran HANYA berupa teks pertanyaan, satu per baris, tanpa nomor, tanpa bullet, tanpa tanda kutip.
-7. Jika SEMUA informasi di konteks sudah habis dibahas di jawaban, atau jika konteks kosong, Anda WAJIB mengeluarkan teks: TIDAK_ADA
+### Rules
+1. Anda HANYA boleh memilih topik dari daftar "Topik tersedia"
+2. Ubah judul topik/section menjadi kalimat tanya langsung (Contoh: judul "Dokumen Pendaftaran" → pertanyaan "Apa saja dokumen pendaftaran?"). DILARANG menambahkan istilah atau ide yang tidak ada di judul topik.
+3. DILARANG membuat pertanyaan yang isinya sama atau mirip dengan "Pertanyaan user", meskipun judulnya berbeda.
+4. Gunakan "Jawaban yang diberikan" HANYA untuk mendeteksi apakah isi sebuah topik sudah dibahas. JANGAN gunakan kosakata dari jawaban sebagai bahan pertanyaan baru.
+5. Pertanyaan harus umum, formal, dan maksimal 10 kata per pertanyaan.
+6. Format: teks langsung, satu per baris, tanpa nomor/bullet/tanda kutip.
+7. Keluarkan TIDAK_ADA jika:
+   - Semua topik sudah dibahas habis di jawaban, ATAU
+   - Judul semua topik yang tersisa sudah terwakili oleh pertanyaan user
 
-### Expected Output Format
-[Pertanyaan 1]
-[Pertanyaan 2]
+### Contoh 1 (judul topik belum dibahas maka buat saran pertanyaan yang berbeda dari pertanyaan user)
+Topik tersedia:
+- Topik: Tahapan Pendaftaran murid baru (dari sumber dokumen: Kebijakan Penerimaan Murid Baru)
+- Topik: Dokumen Pendaftaran (dari sumber dokumen: Kebijakan Penerimaan Murid Baru)
+- Topik: Jadwal Pendaftaran dan Kontak (dari sumber dokumen: Brosur Sistem Penerimaan Murid Baru)
+Pertanyaan user: Bagaimana proses pendaftaran siswa baru?
+Jawaban yang diberikan: Proses pendaftaran siswa baru di SD Integral Luqman Al-Hakim Situbondo adalah sebagai berikut: Pembayaran Biaya Pendaftaran:...
+Saran pertanyaan:
+Apa saja dokumen yang diperlukan untuk pendaftaran?
+Kapan jadwal pendaftaran siswa baru?
 ###
 
-### Contoh 1
-Konteks dokumen: "Syarat masuk: usia minimal 6 tahun, fotocopy akta kelahiran, pas foto 3x4. Biaya pendaftaran Rp200.000."
-Pertanyaan user: Bagaimana proses pendaftaran murid baru?
-Jawaban yang diberikan: Proses pendaftaran terdiri dari: membayar uang pendaftaran, mengisi formulir, observasi, pengumuman, dan daftar ulang.
+### Contoh 2 (judul topik sudah terwakili pertanyaan user maka abaikan, pilih topik lain)
+Topik tersedia:
+- Topik: Dokumen Pendaftaran (dari: Kebijakan PMB)
+- Topik: Tahapan Pendaftaran murid baru (dari: Kebijakan PMB)
+Pertanyaan user: Apa saja dokumen yang dibutuhkan untuk pendaftaran?
+Jawaban yang diberikan: Dokumen yang diperlukan adalah KK, Akta Kelahiran, 
+dan pas foto 3x4.
 Saran pertanyaan:
-Apa saja syarat pendaftaran murid baru?
-Berapa biaya pendaftaran murid baru?
-###
-
-### Contoh 2 (Konteks selaras dengan saran)
-Konteks dokumen: "Pembayaran sekolah meliputi: Infaq Pembangunan, Sarana Prasarana, Seragam, Kegiatan, Buku, SPP, Tabungan Rihlah. Pembayaran dapat ditransfer ke rekening BSI a.n SD Luqman Al Hakim. Konfirmasi ke Bendahara: 0812-XXXX-XXXX."
-Pertanyaan user: Apa saja jenis pembayaran sekolah?
-Jawaban yang diberikan: Jenis pembayaran sekolah adalah Infaq Pembangunan, Sarana Prasarana, Seragam, Kegiatan, Buku, SPP, Tabungan Rihlah.
-Saran pertanyaan:
-Ke mana biaya sekolah ditransfer?
-Berapa nomor kontak bendahara sekolah?
-###
-
-### Contoh 3 (jawaban tidak tersurat → TIDAK_ADA)
-Konteks dokumen: "Ekstrakurikuler wajib adalah Pramuka. 
-Pilihan lainnya: Panahan dan Robotik."
-Pertanyaan user: Apa saja ekstrakurikuler di sekolah?
-Jawaban yang diberikan: Ekstrakurikuler wajib adalah Pramuka, 
-pilihan lainnya Panahan dan Robotik.
-Pertanyaan SALAH (jangan dibuat):
-Ekstrakurikuler mana yang paling populer? ← subjektif, tidak tersurat
-Apakah murid baru boleh ikut Robotik? ← spekulatif, tidak tersurat
-Saran pertanyaan:
-TIDAK_ADA
-###
-
-### Contoh 4 (konteks habis dibahas → TIDAK_ADA)
-Konteks dokumen: "Ekstrakurikuler wajib adalah Pramuka. 
-Pilihan lainnya: Panahan dan Robotik."
-Pertanyaan user: Apa saja ekstrakurikuler di sekolah?
-Jawaban yang diberikan: Ekstrakurikuler wajib adalah Pramuka, 
-pilihan lainnya Panahan dan Robotik.
-Saran pertanyaan:
-TIDAK_ADA
+Bagaimana tahapan pendaftaran murid baru?
 ###
 """
 
-SUGGESTION_USER_PROMPT = """Konteks dokumen:
-{context}
+SUGGESTION_USER_PROMPT = """Topik tersedia:
+{sections}
 
 Pertanyaan user: {question}
 Jawaban yang diberikan: {answer}
@@ -310,7 +289,7 @@ Pertanyaan: {question}"""
                     }
                 ],
                 temperature=0.2,
-                max_tokens=600,
+                max_tokens=1000,
                 # top_p=0.9,
                 seed=700,
                 stream=True 
@@ -339,27 +318,33 @@ Pertanyaan: {question}"""
             print(f"Groq API error: {str(e)}")
             raise
     
-    # Generate context-aware query suggestions using lightweight model
+    # Generate topic-based query suggestions from section headings
     def generate_suggestions(self, question: str, docs: List[Document], answer: str) -> List[str]:
         try:
-            # Filter docs by relative score threshold (85% of top score)
-            if docs:
-                top_score = max(doc.metadata.get("score", 0) for doc in docs)
-                threshold = top_score * 0.85
-                relevant_docs = [doc for doc in docs if doc.metadata.get("score", 0) >= threshold]
-                
-                print(f"🔍 Suggestion filter: top_score={top_score:.4f}, threshold={threshold:.4f}, {len(relevant_docs)}/{len(docs)} docs passed")
-            else:
-                relevant_docs = []
-            
-            if not relevant_docs:
+            if not docs:
                 return []
             
-            # Build context from filtered docs only
-            filtered_context = format_docs(relevant_docs)
+            # Extract unique section titles with source from retrieved docs
+            seen = set()
+            available_sections = []
+            for doc in docs:
+                section = doc.metadata.get("section_title", "").strip()
+                source = doc.metadata.get("source", "").strip()
+                key = f"{source}|{section}"
+                if section and key not in seen:
+                    seen.add(key)
+                    available_sections.append(f"- Topik: {section} (dari sumber dokumen: {source})")
+            
+            if not available_sections:
+                return []
+            
+            sections_text = "\n".join(available_sections)
+            print(f"🔍 Suggestion sections: {len(available_sections)} topics from {len(docs)} docs")
+            for s in available_sections:
+                print(f"   {s}")
             
             user_prompt = SUGGESTION_USER_PROMPT.format(
-                context=filtered_context[:2000],
+                sections=sections_text,
                 question=question,
                 answer=answer[:1500]
             )
@@ -377,7 +362,7 @@ Pertanyaan: {question}"""
                     }
                 ],
                 temperature=0.0,
-                max_tokens=100,
+                max_tokens=200,
                 # top_p=0.9,
                 stop=["###"],
                 stream=False
@@ -398,13 +383,13 @@ Pertanyaan: {question}"""
                 # Remove numbering/bullets if model adds them
                 line = line.lstrip("0123456789.-) ").strip()
                 # Only accept valid question lines (must end with ?)
-                if (line and len(line) > 5 and len(line) <= 80 
-                    and line.endswith("?")
+                if (line and len(line) > 3 and len(line) <= 80 
+                    # and line.endswith("?")
                     and "TIDAK_ADA" not in line.upper()):
                     suggestions.append(line)
             
             # Return max 2 suggestions
-            suggestions = suggestions[:2]
+            suggestions = suggestions[:3]
             
             print(f"💡 Generated {len(suggestions)} suggestions")
             for i, s in enumerate(suggestions, 1):

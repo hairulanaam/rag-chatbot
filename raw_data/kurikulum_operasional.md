@@ -240,8 +240,100 @@ Berikut adalah budaya sekolah yang dilaksanakan di SD Integral Luqman Al Hakim:
 
 4. **Kegiatan Insentil** yaitu kegiatan yang dilakukan sewaktu-waktu Kegiatan insidentil dan nyata aksi disesuaikan dan kondisi riil situasi seperti donasi gempa bumi, menengok teman yang sakit, aksi donasi buku dan lain sebagainya.
 
-## 5. Kalender Pendidikan
-Demi kelancaran proses pembelajaran diperlukan pengaturan waktu yang dibutuhkan dalam satu tahun ajaran yang meliputi awal tahun ajaran baru, minggu efektif belajar, waktu pembelajaran efektif dan hari libur dalam suatu kalender pendidikan yang disusun berdasarkan kalender pendidikan Provinsi Jawa Timur tahun 2024/2025. Berikut alokasi waktu minggu efektif belajar, waktu libur dan kegiatan lainnya beserta kalender pendidikan SD Integral Luqman Al Hakim tahun pelajaran 2024/2025
+## 5. Beban Belajar
+Di SD Integral Luqman Al Hakim setiap peserta didik mengikuti seluruh kegiatan pembelajaran di masing-masing kelas dengan diampu oleh guru masing-masing. Setiap mata pelajaran memiliki alokasi waktu minimal sesuai ketetapan Kurikulum Nasional. Di samping itu beban belajar mengacu terhadap pencapaian visi sekolah.
+
+### Tabel 5.1 Pengaturan waktu belajar untuk kelas I atau 1 adalah sebagai berikut:
+
+| No | Mata Pelajaran | Banyak JP Per Minggu | Kegiatan Reguler Per Tahun | Proyek Profil Pelajar Pancasila | Total Per Tahun |
+| -- | --- | --- | --- | --- | --- |
+| 1  | Pendidikan Agama dan Budi Pekerti | 3 JP | 108 | 36 | 144 |
+| 2  | Pendidikan Pancasila | 4 JP | 144 | 36 | 180 |
+| 3  | Bahasa Indonesia | 6 JP | 216 | 72 | 288 |
+| 4  | Matematika | 4 JP | 144 | 36 | 180 |
+| 5  | PJOK | 3 JP | 108 | 36 | 144 |
+| 6  | Seni Rupa | 3 JP | 108 | 36 | 144 |
+| 7  | Bahasa Inggris | 2 JP | 72 | - | 72 |
+| 8  | Bahasa Madura | 2 JP | 72 | - | 72 |
+| 9  | BTQ | 2 JP | 72 | - | 72 |
+| 10 | Bahasa Arab | 2 JP | 72 | - | 72 |
+| 11 | Fiqih Ibadah | 2 JP | 72 | - | 72 |
+| Total | 33 JP | 1188 | 252 | 1440 |
+
+### 5.2 Pengaturan waktu belajar untuk kelas II atau 2 adalah sebagai berikut :
+
+| No | Mata Pelajaran | Banyak JP Per Minggu | Kegiatan Reguler Per Tahun | Proyek Profil Pelajar Pancasila | Total Per Tahun |
+| -- | --- | --- | --- | --- | --- |
+| 1  | Pendidikan Agama dan Budi Pekerti | 3 JP | 108 | 36 | 144 |
+| 2  | Pendidikan Pancasila | 4 JP | 144 | 36 | 180 |
+| 3  | Bahasa Indonesia | 7 JP | 252 | 72 | 324 |
+| 4  | Matematika | 5 JP | 144 | 36 | 216 |
+| 5  | PJOK | 3 JP | 180 | 36 | 144 |
+| 6  | Seni Rupa | 3 JP | 108 | 36 | 144 |
+| 7  | Bahasa Inggris | 2 JP | 72 | - | 72 |
+| 8  | Bahasa Madura | 2 JP | 72 | - | 72 |
+| 9  | BTQ | 2 JP | 72 | - | 72 |
+| 10 | Bahasa Arab | 2 JP | 72 | - | 72 |
+| 11 | Fiqih Ibadah | 2 JP | 72 | - | 72 |
+| Total | 35 JP | 1260 | 252 | 1512 |
+
+### Tabel 5.3 Pengaturan waktu belajar untuk kelas III atau 3 adalah sebagai berikut :
+
+| No | Mata Pelajaran | Banyak JP Per Minggu | Kegiatan Reguler Per Tahun | Proyek Profil Pelajar Pancasila | Total Per Tahun |
+| -- | --- | --- | --- | --- | --- |
+| 1  | Pendidikan Agama dan Budi Pekerti | 3 JP | 108 | 36 | 144 |
+| 2  | Pendidikan Pancasila | 4 JP | 144 | 36 | 180 |
+| 3  | Bahasa Indonesia | 6 JP | 216 | 72 | 288 |
+| 4  | Matematika | 5 JP | 180 | 36 | 180 |
+| 5  | Ilmu Pengetahuan Alam dan Sosial | 5 JP | 180 | 36 | |
+| 6  | PJOK | 3 JP | 108 | 36 | 144 |
+| 7  | Seni Rupa | 3 JP | 108 | 36 | 144 |
+| 8  | Bahasa Inggris | 2 JP | 72 | - | 72 |
+| 9  | Bahasa Madura | 2 JP | 72 | - | 72 |
+| 10 | BTQ | 2 JP | 72 | - | 72 |
+| 11 | Bahasa Arab | 2 JP | 72 | - | 72 |
+| 12 | Fiqih Ibadah | 2 JP | 72 | - | 72 |
+| Total | 33 JP | 1404 | 252 | 1656 |
+
+### 5.4 Pengaturan waktu belajar untuk kelas IV-V atau 4-5 adalah sebagai berikut
+
+| No | Mata Pelajaran | Banyak JP Per Minggu | Kegiatan Reguler Per Tahun | Proyek Profil Pelajar Pancasila | Total Per Tahun |
+| -- | --- | --- | --- | --- | --- |
+| 1  | Pendidikan Agama dan Budi Pekerti | 3 JP | 108 | 36 | 144 |
+| 2  | Pendidikan Pancasila | 4 JP | 144 | 36 | 180 |
+| 3  | Bahasa Indonesia | 6 JP | 216 | 36 | 288 |
+| 4  | Matematika | 5 JP | 180 | 36 | 180 |
+| 5  | Ilmu Pengetahuan Alam dan Sosial | 5 JP | 180 | 36 |                 |
+| 6  | PJOK | 3 JP | 108 | 36 | 144 |
+| 7  | Seni Rupa | 3 JP | 108 | 36 | 144 |
+| 8  | Bahasa Inggris | 2 JP | 72 | - | 72 |
+| 9  | Bahasa Madura | 2 JP | 72 | - | 72 |
+| 10 | BTQ | 2 JP | 72 | - | 72 |
+| 11 | Bahasa Arab | 2 JP | 72 | - | 72 |
+| Total | 37 JP | 1332 | 252 | 1584 |
+
+### Tabel 5.5 Pengaturan waktu belajar untuk kelas VI atau 6 adalah sebagai berikut :
+
+| No | Mata Pelajaran | Banyak JP Per Minggu | Kegiatan Reguler Per Tahun | Proyek Profil Pelajar Pancasila | Total Per Tahun |
+| -- | --- | --- | --- | --- | --- |
+| 1  | Pendidikan Agama dan Budi Pekerti | 3 JP | 108 | 36 | 144 |
+| 2  | Pendidikan Pancasila | 4 JP | 144 | 36 | 180 |
+| 3  | Bahasa Indonesia | 6 JP | 216 | 36 | 252 |
+| 4  | Matematika | 5 JP | 180 | 36 | 216 |
+| 5  | Ilmu Pengetahuan Alam dan Sosial | 5 JP | 180 | 36 | 216 |
+| 6  | Pendidikan Jasmani Olahraga dan Kesehatan | 3 JP | 108 | 36 | 144 |
+| 7  | Seni Rupa | 3 JP | 108 | 36 | 144 |
+| 8  | Bahasa Inggris | 2 JP | 72 | - | 72 |
+| 9  | Bahasa Madura | 2 JP | 72 | - | 72 |
+| 10 | BTQ | 2 JP | 72 | - | 72 |
+| 11 | Bahasa Arab | 2 JP | 72 | - | 72 |
+| Total | 37 JP | 1332 | 252 | 1584 |
+
+## 6. Kalender Pendidikan
+
+Demi kelancaran proses pembelajaran diperlukan pengaturan waktu yang dibutuhkan dalam satu tahun ajaran yang meliputi awal tahun ajaran baru, minggu efektif belajar, waktu pembelajaran efektif dan hari libur dalam suatu kalender pendidikan yang disusun berdasarkan kalender pendidikan Provinsi Jawa Timur tahun 2024/2025.
+
+Berikut alokasi waktu minggu efektif belajar, waktu libur dan kegiatan lainnya beserta kalender pendidikan SD Integral Luqman Al Hakim tahun pelajaran 2024/2025
 
 | No | Kegiatan | Alokasi Waktu | Keterangan |
 | -- | --- | --- | --- |
@@ -253,19 +345,23 @@ Demi kelancaran proses pembelajaran diperlukan pengaturan waktu yang dibutuhkan 
 | 6  | Hari libur khusus | Maksimum 1 minggu | Untuk kegiatan tertentu |
 | 7  | Kegiatan khusus sekolah | Maksimum 1 minggu | Digunakan untuk kegiatan yang diprogramkan secara khusus oleh sekolah tanpa mengurangi jumlah minggu efektif belajar dan waktu pembelajaran efektif |
 
-## Rencana Pembelajaran
-Pembelajaran pada dasarnya merupakan proses aktivitas yang dilakukan secara tertata dan teratur, berjalan secara logis dan sistematis dengan mengikuti aturan-aturan yang telah disepakati sebelumnya. Setiap kegiatan pembelajaran bukan keinginan dari guru secara sepihak, tetapi merupakan proyeksi dari keinginan yang dikemas dalam suatu kurikulum. Rencana pembelajaran adalah pegangan guru dalam mengajar, dibuat oleh guru untuk membantu dalam mengajar agar sesuai dengan capaian pembelajaran. Rencana Pembelajaran berisi tiga poin utama dalam proses pembelajaran yaitu tujuan pembelajaran, aktivitas atau kegiatan pembelajaran yang didalamnya dintegrasikan penguatan Profil Pelajar Pancasila dan penilaian. Sedang dalam kurikulum 2013 dikembangkan dari suatu materi pokok atau tema tertentu yang mengacu pada silabus dan mencakup:
+## B. Rencana Pembelajaran
 
-1. Data sekolah, matapelajaran, dan kelas/semester
-2. Materi pokok
-3. Alokasi waktu
-4. Tujuan pembelajaran, KD dan indikator pencapaian kompetensi
-5. Materi pembelajaran metode pembelajaran
-6. Media, alat dan sumber belajar
-7. Langkah‑langkah kegiatan pembelajaran
-8. Penilaian
+Pembelajaran pada dasarnya merupakan proses aktivitas yang dilakukan secara tertata dan teratur, berjalan secara logis dan sistematis dengan mengikuti aturan-aturan yang telah disepakati sebelumnya. Setiap kegiatan pembelajaran bukan keinginan dari guru secara sepihak, tetapi merupakan proyeksi dari keinginan yang dikemas dalam suatu kurikulum.
+
+Rencana pembelajaran adalah pegangan guru dalam mengajar, dibuat oleh guru untuk membantu dalam mengajar agar sesuai dengan capaian pembelajaran. Rencana Pembelajaran berisi tiga poin utama dalam proses pembelajaran yaitu tujuan pembelajaran, aktivitas atau kegiatan pembelajaran yang didalamnya dintegrasikan penguatan Profil Pelajar Pancasila dan penilaian. Sedang dalam kurikulum 2013 dikembangkan dari suatu materi pokok atau tema tertentu yang mengacu pada silabus dan mencakup:
+
+1. data sekolah, matapelajaran, dan kelas/semester,
+2. materi pokok,
+3. alokasi waktu,
+4. tujuan pembelajaran, KD dan indikator pencapaian kompetensi;
+5. materi pembelajaran; metode pembelajaran;
+6. media, alat dan sumber belajar;
+7. langkah‑langkah kegiatan pembelajaran; dan
+8. penilaian.
 
 Alasan seorang guru harus membuat rencana pembelajaran adalah sebagai berikut:
+
 1. Pembelajaran berlangsung lebih sistematis.
 2. Mempermudah analisis keberhasilan peserta didik.
 3. Memudahkan penyampaian materi.
@@ -273,14 +369,16 @@ Alasan seorang guru harus membuat rencana pembelajaran adalah sebagai berikut:
 5. Menghemat waktu dan tenaga.
 6. Bahan evaluasi pembelajaran sekaligus refleksi.
 
-## Asesmen Capaian Pembelajaran
+## C. Asesmen Capaian Pembelajaran
+
 Asesmen adalah proses pengumpulan dan pengolahan informasi untuk mengetahui kebutuhan belajar, perkembangan dan pencapaian hasil belajar peserta didik. Asesmen menjadi kegiatan yang penting dilakukan dalam pembelajaran untuk mengetahui kebutuhan belajar serta perkembangan dan pencapaian hasil belajar peserta didik, juga dapat dimanfaatkan sebagai umpan balik untuk perbaikan pembelajaran. Guru dapat melakukan pemantauan perkembangan peserta didik melalui tiga jenis asesmen yaitu:
 
-1. **Asesmen sebagai proses pembelajaran** (assessment as learning), bertujuan untuk merefleksi proses pembelajaran dan berfungsi sebagai asesmen formatif yang memiliki beberapa fungsi yaitu untuk mendiagnosis kemampuan awal dan kebutuhan belajar peserta didik, sebagai umpan balik memperbaiki proses pembelajaran dan strategi pembelajaran, mendiagnosis daya serap materi, dan memacu perubahan suasana kelas.
-2. **Asesmen untuk proses pembelajaran** (assessment for learning), bertujuan memperbaiki proses pembelajaran. Assessment for learning dapat dilakukan dalam format penilaian formatif sekaligus penilaian sumatif yang berfungsi sebagai alat ukur mengetahui pencapaian hasil belajar peserta didik, merefleksi pembelajaran, menjadi umpan balik untuk merancang perbaikan proses pembelajaran, dan untuk melihat kekuatan dan kelemahan belajar peserta didik.
-3. **Asesmen pada akhir proses pembelajaran** (assessment of learning), berfungsi sebagai alat ukur pencapaian hasil belajar melalui nilai capaian, menjadi umpan balik untuk merancang/perbaikan proses pembelajaran, sekaligus melihat kekuatan dan kelemahan belajar peserta didik.
+1. Asesmen sebagai proses pembelajaran (assessment as learning), bertujuan untuk merefleksi proses pembelajaran dan berfungsi sebagai asesmen formatif yang memiliki beberapa fungsi yaitu untuk mendiagnosis kemampuan awal dan kebutuhan belajar peserta didik, sebagai umpan balik memperbaiki proses pembelajaran dan strategi pembelajaran, mendiagnosis daya serap materi, dan memacu perubahan suasana kelas.
+2. Asesmen untuk proses pembelajaran (assessment for learning), bertujuan memperbaiki proses pembelajaran. Assessment for learning dapat dilakukan dalam format penilaian formatif sekaligus penilaian sumatif yang berfungsi sebagai alat ukur mengetahui pencapaian hasil belajar peserta didik, merefleksi pembelajaran, menjadi umpan balik untuk merancang perbaikan proses pembelajaran, dan untuk melihat kekuatan dan kelemahan belajar peserta didik.
+3. Asesmen pada akhir proses pembelajaran (assessment of learning), berfungsi sebagai alat ukur pencapaian hasil belajar melalui nilai capaian, menjadi umpan balik untuk merancang/perbaikan proses pembelajaran, sekaligus melihat kekuatan dan kelemahan belajar peserta didik.
 
 Ketiganya dapat dilaksanakan baik dengan metode asesmen sumatif maupun formatif. Lingkup asesmen hasil belajar oleh pendidik mencakup aspek sikap, aspek pengetahuan, dan aspek keterampilan. Adapun mekanisme asesmen hasil belajar oleh pendidik meliputi:
+
 1. Rencana strategi asesmen oleh pendidik dilakukan pada saat penyusunan Rencana Pelaksanaan Pembelajaran (RPP).
 2. Asesmen Hasil Belajar oleh pendidik dilakukan untuk memantau proses, kemajuan belajar, dan perbaikan hasil belajar melalui penugasan dan pengukuran pencapaian satu atau lebih capaian pembelajaran.
 3. Asesmen aspek sikap dilakukan melalui observasi/pengamatan sebagai sumber informasi utama dan pelaporannya menjadi tanggungjawab wali kelas atau guru kelas.
@@ -292,6 +390,7 @@ Ketiganya dapat dilaksanakan baik dengan metode asesmen sumatif maupun formatif.
 Hasil asesmen kemudian dilakukan analisis atau evaluasi hasil belajar. Evaluasi bertujuan untuk menentukan ketercapaian pemahaman peserta didik terhadap tujuan capaian pembelajaran dan penguatan Profil Pelajar Pancasila. Analisis untuk pengetahuan juga dilakukan untuk menentukan umpan balik pasca penilaian terhadap peserta didik, yaitu pelaksanaan program remedial dan pengayaan.
 
 Prinsip‑prinsip yang harus diperhatikan oleh guru pada saat melaksanakan penilaian sebagai berikut:
+
 - Sahih: Penilaian didasarkan pada data yang memang mencerminkan maksudnya kemampuan yang ingin diukur.
 - Objektif: Penilaian yang didasarkan pada prosedur dan kriteria yang jelas dan tidak boleh dipengaruhi oleh subjektivitas penilai (guru).
 - Adil: Suatu penilaian yang tidak menguntungkan atau merugikan siswa hanya karena mereka (bisa jadi) berkebutuhan khusus serta memiliki perbedaan latar belakang agama, suku, budaya, adat istiadat, status sosial ekonomi, dan gender.
@@ -302,7 +401,8 @@ Prinsip‑prinsip yang harus diperhatikan oleh guru pada saat melaksanakan penil
 - Akuntabel: Penilaian yang proses dan hasilnya dapat dipertanggungjawabkan, baik dari teknik, prosedur, maupun segi untuk hasilnya, dan kemajuan.
 - Edukatif: Penilaian dilakukan kepentingan pendidikan siSwa;
 
-## Pendampingan, Evaluasi, Dan Pengembangan Profesional
+## D. Pendampingan, Evaluasi, Dan Pengembangan Profesional
+
 Pendampingan, evaluasi, dan pengembangan profesional dilakukan secara internal oleh satuan pendidikan untuk memastikan pembelajaran berjalan sesuai rencana untuk mencapai tujuan yang ditetapkan. Proses ini dikelola oleh Kepala Sekolah dan/atau guru yang dianggap sudah mampu untuk melakukan peran ini. Evaluasi, pendampingan dan pengembangan profesional dilakukan secara bertahap dan mandiri agar terjadi peningkatan kualitas secara berkelanjutan di satuan pendidikan, sesuai dengan kemampuan satuan pendidikan.
 
 ### 1. Pendampingan dan Pengembangan Profesional
@@ -326,6 +426,7 @@ Pendampingan, evaluasi, dan pengembangan profesional dilakukan secara internal o
 Hasil evaluasi digunakan sebagai bahan acuan untuk perencanaan kurikulum pengembangan sekolah diharapkan dapat menjadi solusi bagi permasalahan yang pernah dihadapi sehingga sekolah selalu berkembang ke arah kemajuan.
 
 Evaluasi kurikulum dilakukan berdasarkan hasil evaluasi pembelajaran yang dilakukan secara reflektif, yaitu :
+
 1. Evaluasi Harian, dilakukan secara individual oleh guru setelah pembelajaran berdasarkan catatan anekdotal selama proses pembelajaran, penilaian dan refleksi ketercapaian tujuan pembelajaran. Hasil evaluasi ini digunakan untuk perbaikan rencana pembelajaran atau RPP pada hari berikutnya.
 2. Evaluasi Per Unit Belajar, dilakukan secara kelompok (team teaching) setelah satu unit pembelajaran atau tema selesai. Hasil ini digunakan untuk merefleksikan proses belajar, ketercapaian tujuan dan melakukan perbaikan maupun penyesuaian terhadap proses belajar dan perangkat ajar, yaitu alur tujuan pembelajaran dan modul ajar.
 3. Evaluasi Per Semester, dilakukan secara kelompok (team teaching) setelah satu semester selesai. Evaluasi ini dilakukan berdasarkan refleksi pembelajaran dan Hasil asesmen peserta didik yang telah disampaikan pada laporan hasil belajar peserta didik.
@@ -333,22 +434,32 @@ Evaluasi kurikulum dilakukan berdasarkan hasil evaluasi pembelajaran yang dilaku
 
 Pelaksanaan evaluasi kurikulum SD Integral Lugman Al Hakim dilakukan oleh tim pengembang kurikulum sekolah bersama kepala sekolah dan komite sekolah. Evaluasi dilaksanakan berdasarkan data yang telah dikumpulkan pada evaluasi pembelajaran, hasil supervisi Kepala Sekolah, laporan kegiatan Kelompok Kerja Guru, hasil kerja peserta didik dan kuesioner peserta didik dan orang tua. Informasi yang berimbang dan berdasarkan data tersebut diharapkan menjadi bahan evaluasi untuk semakin meningkatkan kualitas pelayanan sekolah kepada peserta didik, peningkatan prestasi dan hubungan kerja sama dengan pihak lain.
 
-## Kenaikan Kelas
-Penentuan kenaikan kelas dilakukan dengan mempertimbangkan laporan kemajuan belajar dan iklim yang mencerminkan pencapaian peserta didik pada semua mata pelajaran dan prestasi lain selama 1 (satu) tahun ajaran. Untuk menilai pencapaian hasil belajar peserta didik sebagai dasar penentuan kenaikan kelas dapat berdasarkan penilaian sumatif. Penilaian pencapaian hasil belajar peserta didik untuk kenaikan kelas dilakukan dengan membandingkan pencapaian hasil belajar peserta didik dengan kriteria ketercapaian tujuan pembelajaran.
+## 1. Kenaikan Kelas
 
-Apabila terdapat tujuan pembelajaran pada mata pelajaran tertentu yang tidak tercapai sampai saatnya kenaikan kelas, maka pada raport peserta didik tersebut dituangkan nilai aktual yang dicapai dan dideskripsikan bahwa peserta didik tersebut masih memiliki tujuan pembelajaran yang perlu ditindaklanjuti di kelas berikutnya. Dalam proses penentuan peserta didik tidak naik kelas, perlu dilakukan musyawarah dan pertimbangan yang matang sehingga opsi tidak naik kelas menjadi pilihan paling akhir apabila seluruh pertimbangan dan perlakuan telah dilaksanakan.
+Penentuan kenaikan kelas dilakukan dengan mempertimbangkan laporan kemajuan belajar dan iklim yang mencerminkan pencapaian peserta didik pada semua mata pelajaran dan prestasi lain selama 1 (satu) tahun ajaran.
+
+Untuk menilai pencapaian hasil belajar peserta didik sebagai dasar penentuan kenaikan kelas dapat berdasarkan penilaian sumatif. Penilaian pencapaian hasil belajar peserta didik untuk kenaikan kelas dilakukan dengan membandingkan pencapaian hasil belajar peserta didik dengan kriteria ketercapaian tujuan pembelajaran.
+
+Apabila terdapat tujuan pembelajaran pada mata pelajaran tertentu yang tidak tercapai sampai saatnya kenaikan kelas, maka pada raport peserta didik tersebut dituangkan nilai aktual yang dicapai dan dideskripsikan bahwa peserta didik tersebut masih memiliki tujuan pembelajaran yang perlu ditindaklanjuti di kelas berikutnya.
+
+Dalam proses penentuan peserta didik tidak naik kelas, perlu dilakukan musyawarah dan pertimbangan yang matang sehingga opsi tidak naik kelas menjadi pilihan paling akhir apabila seluruh pertimbangan dan perlakuan telah dilaksanakan.
 
 Peserta didik dapat naik kelas dengan mempertimbangkan:
+
 1. Ketercapaian tujuan pelajaran pada setiap mata pelajaran minimal 70% dari tujuan pembelajaran yang tersedia.
 2. Capaian kegiatan ekstrakurikuler yang diikuti minimal cukup dalam 1 (satu) tahun ajaran.
 3. Prestasi lain selama 1 (satu) tahun ajaran.
 4. Karakter minimal baik.
 
-## Kelulusan
-Untuk menilai pencapaian hasil belajar peserta didik sebagai dasar kelulusan dapat berdasarkan penilaian sumatif, yang dapat dilakukan dalam bentuk tes tulis, tugas untuk performa, portofolio, atau kombinasi. Penilaian pencapaian hasil belajar peserta didik untuk kelulusan dilakukan dengan membandingkan pencapaian hasil belajar peserta didik dengan kriteria ketercapaian tujuan pembelajaran. Dalam proses penentuan peserta didik tidak naik kelas, perlu dilakukan musyawarah dan pertimbangan yang matang sehingga opsi tidak naik kelas menjadi pilihan paling akhir apabila seluruh pertimbangan clan perlakuan telah dilaksanakan.
+## 2. Kelulusan
+
+Untuk menilai pencapaian hasil belajar peserta didik sebagai dasar kelulusan dapat berdasarkan penilaian sumatif, yang dapat dilakukan dalam bentuk tes tulis, tugas untuk performa, portofolio, atau kombinasi. Penilaian pencapaian hasil belajar peserta didik untuk kelulusan dilakukan dengan membandingkan pencapaian hasil belajar peserta didik dengan kriteria ketercapaian tujuan pembelajaran.
+
+Dalam proses penentuan peserta didik tidak naik kelas, perlu dilakukan musyawarah dan pertimbangan yang matang sehingga opsi tidak naik kelas menjadi pilihan paling akhir apabila seluruh pertimbangan clan perlakuan telah dilaksanakan.
 
 Penentuan kelulusan dengan mempertimbangkan :
-1. Ketercapaian tujuan pelajaran pada setiap mata pelajaran minimal 70% dari tujuan pembelajaran yang tersedia kelas 5 dan 6.
+
+1. Ketercapaian tujuan pelajaran pacla setiap mata pelajaran minimal 70% dari tujuan pembelajaran yang tersedia kelas 5 clan 6.
 2. Capaian kegiatan ekstrakurikuler yang diikuti minimal cukup selama kelas 5 dan 6.
 3. Prestasi lain selama kelas 5 dan 6.
 4. Karakter minimal baik.

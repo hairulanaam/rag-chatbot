@@ -21,14 +21,12 @@ STT_MODEL_NAME = "whisper-large-v3-turbo"
 # Fallback Detection — frasa yang menandakan LLM tidak bisa menjawab
 # Dicocokkan (case-insensitive) terhadap respons LLM setelah generate
 FALLBACK_PHRASES = [
-    "informasi tidak tersedia",
+    "mohon maaf",
     "informasi tersebut tidak tersedia",
     "tidak menemukan informasi",
-    "tidak memiliki informasi",
     "di luar cakupan",
     "tidak ada informasi tentang",
     "tidak tersedia dalam konteks",
-    "tidak dapat menemukan",
 ]
 
 # Dashboard Configuration

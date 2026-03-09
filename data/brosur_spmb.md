@@ -29,12 +29,12 @@
 - UKS
 - Lapangan Olahraga
 
-## Info Pendaftaran
+## Jadwal Pendaftaran
 Gelombang Inden: 03 Nopember - 18 Desember 2025
 Gelombang Reguler: 05 Januari - 28 Mei 2026
 Pendaftaran sewaktu-waktu ditutup jika kuota terpenuhi
 
+## Kontak Informasi Pendaftaran
 Informasi Pendaftaran Hubungi:
 0812 1114 2012
 0852 3628 3690
-

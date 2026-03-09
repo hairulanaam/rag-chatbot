@@ -46,6 +46,7 @@
     <!-- DASHBOARD -->
     <!-- ============================================================ -->
     <button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
 
     <div class="dashboard" id="dashboard">
         <!-- Sidebar -->
@@ -93,9 +94,6 @@
                 <div class="card stat-section" id="engagementCard">
                     <div class="card-header">
                         <h3>Interaksi Pengguna</h3>
-                        <button class="btn btn-outline btn-sm" onclick="loadDailyStats(); loadLogStats(); loadLogs()"><i
-                                data-lucide="refresh-cw"></i>
-                            Refresh</button>
                     </div>
                     <div class="engagement-layout">
                         <div class="engagement-chart-wrap">
@@ -224,8 +222,6 @@
                         <div class="btn-group">
                             <button class="btn btn-primary btn-sm" onclick="toggleCreateSection()"><i
                                     data-lucide="plus"></i> Tambah</button>
-                            <button class="btn btn-outline btn-sm" onclick="loadDocuments()"><i
-                                    data-lucide="refresh-cw"></i> Refresh</button>
                             <button class="btn btn-success btn-sm" onclick="indexAllDocuments()"><i
                                     data-lucide="zap"></i> Index Semua</button>
                         </div>
@@ -308,7 +304,8 @@
         <div class="modal knowledge-modal">
             <div class="knowledge-modal-header">
                 <h3><i data-lucide="book-plus" style="width:20px;height:20px"></i> Tambah Informasi Baru</h3>
-                <button class="btn btn-outline btn-sm" onclick="closeKnowledgeModal()" title="Tutup"><i data-lucide="x"></i></button>
+                <button class="btn btn-outline btn-sm" onclick="closeKnowledgeModal()" title="Tutup"><i
+                        data-lucide="x"></i></button>
             </div>
             <div class="knowledge-modal-body">
                 <div class="knowledge-question-preview">
@@ -327,21 +324,25 @@
                         <option value="">Memuat dokumen...</option>
                     </select>
                     <input type="text" id="knowledgeNewDocName" placeholder="nama_dokumen_baru" style="display:none">
-                    <small style="color: var(--text-muted); margin-top: 4px; display: none;" id="knowledgeNewDocHint"></small>
+                    <small style="color: var(--text-muted); margin-top: 4px; display: none;"
+                        id="knowledgeNewDocHint"></small>
                 </div>
                 <div class="form-group">
                     <label for="knowledgeSectionTitle">Judul Section</label>
                     <input type="text" id="knowledgeSectionTitle" placeholder="contoh: Informasi Pendaftaran">
-                    <small style="color: var(--text-muted); margin-top: 4px; display: block;">Akan ditambahkan sebagai heading ## di dokumen</small>
+                    <small style="color: var(--text-muted); margin-top: 4px; display: block;">Akan ditambahkan sebagai
+                        heading ## di dokumen</small>
                 </div>
                 <div class="form-group">
                     <label for="knowledgeContent">Konten Jawaban</label>
-                    <textarea id="knowledgeContent" rows="8" placeholder="Tulis informasi/jawaban yang ingin ditambahkan sebagai informasi baru..."></textarea>
+                    <textarea id="knowledgeContent" rows="8"
+                        placeholder="Tulis informasi/jawaban yang ingin ditambahkan sebagai informasi baru..."></textarea>
                 </div>
             </div>
             <div class="knowledge-modal-footer">
                 <!-- <button class="btn btn-outline" onclick="closeKnowledgeModal()">Batal</button> -->
-                <button class="btn btn-success" onclick="submitKnowledge(true)"><i data-lucide="zap"></i> Simpan & Index</button>
+                <button class="btn btn-success" onclick="submitKnowledge(true)"><i data-lucide="zap"></i> Simpan &
+                    Index</button>
             </div>
         </div>
     </div>
