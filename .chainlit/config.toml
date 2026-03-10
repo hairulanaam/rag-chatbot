@@ -141,10 +141,10 @@ alert_style = "classic"
 # custom_meta_image_url = "https://chainlit-cloud.s3.eu-west-3.amazonaws.com/logo/chainlit_banner.png"
 
 # Load assistant logo directly from URL.
-logo_file_url = "/public/logo.png"
+logo_file_url = "https://i.ibb.co.com/LdXJ6TR4/logo.png"
 
 # Load assistant avatar image directly from URL.
-default_avatar_file_url = "/public/logo.png"
+default_avatar_file_url = "https://i.ibb.co.com/LdXJ6TR4/logo.png"
 
 # Specify a custom build directory for the frontend.
 # This can be used to customize the frontend code.
