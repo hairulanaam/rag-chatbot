@@ -389,7 +389,7 @@ Pertanyaan: {question}"""
                     suggestions.append(line)
             
             # Return max 2 suggestions
-            suggestions = suggestions[:3]
+            suggestions = suggestions[:2]
             
             print(f"💡 Generated {len(suggestions)} suggestions")
             for i, s in enumerate(suggestions, 1):
