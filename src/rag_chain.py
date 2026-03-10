@@ -34,7 +34,7 @@ Silakan hubungi kami langsung melalui:
 - Kunjungi: Jl. Gunung Bromo/Pasar Hewan Sumberkolak, Panarukan, Situbondo"
 
 ### Output Format
-- AWALAN: Sebutkan sumber dokumen singkat (contoh: "Berdasarkan Dokumen Profil Sekolah,..." atau "Berdasarkan Dokumen Kurikulum Operasional,...")
+- AWALAN: Sebutkan sumber dokumen singkat (contoh: "Berdasarkan Dokumen Profil Sekolah" atau "Berdasarkan Dokumen Kurikulum Operasional")
 - ISI: Informasi lengkap dan akurat sesuai dokumen, gunakan poin-poin jika perlu
 """
 
@@ -100,6 +100,12 @@ def format_docs(docs: List[Document]) -> str:
 
 # Format response for better display
 def format_response(text: str) -> str:
+    import re
+    
+    # Clean up repeated dots (e.g. ".." or "..." that are not intentional ellipsis)
+    # Replace 2 consecutive dots with a single dot (but keep 3-dot ellipsis "…" or "..." intact)
+    text = re.sub(r'(?<!\.)\.\.(?!\.)', '.', text)
+    
     lines = text.split('\n')
     formatted_lines = []
     

@@ -16,7 +16,14 @@ EMBEDDING_DIMENSION = 768  # Diturunkan dari 3072 default untuk efisiensi storag
 
 LLM_MODEL_NAME = "llama-3.3-70b-versatile"
 SUGGESTION_MODEL_NAME = "llama-3.1-8b-instant"
-STT_MODEL_NAME = "whisper-large-v3-turbo"
+STT_MODEL_NAME = "whisper-large-v3"
+
+# Prompt kontekstual Whisper — berisi kosakata domain sekolah
+# untuk meningkatkan akurasi transkripsi bahasa Indonesia (maks 224 token)
+STT_PROMPT = (
+    "Percakapan tentang informasi informasi SD Integral Luqman Al Hakim Situbondo dalam Bahasa Indonesia"
+    "Konteks pembahasan: profil atau identitas sekolah, penerimaan Murid Baru (syarat dan alur pendaftaran), biaya Pendidikan (jenis dan ketentuan pembayaran), kurikulum operasional dan kebijakan operasional sekolah"
+)
 
 # Fallback Detection — frasa yang menandakan LLM tidak bisa menjawab
 # Dicocokkan (case-insensitive) terhadap respons LLM setelah generate

@@ -193,16 +193,15 @@ div[data-label-injected="true"]>button[data-state] {
 /* Query Suggestion Label (injected via custom.js) */
 .suggestion-label {
     order: 0 !important;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: hsl(0 0% 45%);
+    font-size: 1rem;
+    font-weight: 600;
+    color: hsl(0 0% 15%);
     margin-bottom: 2px;
-    letter-spacing: 0.01em;
     width: 100%;
 }
 
 .dark .suggestion-label {
-    color: hsl(0 0% 60%);
+    color: hsl(0 0% 100%);
 }
 
 /* Suggestion buttons - buttons with UUID ids inside the injected container */

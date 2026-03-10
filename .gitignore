@@ -27,3 +27,4 @@ cosine_similarity_log.py
 test_query_embedding.py
 note.txt
 rag_chain_log.py
+audio_debug.py

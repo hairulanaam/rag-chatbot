@@ -254,6 +254,11 @@ async def process_question(user_question: str, msg: cl.Message = None):
             full_response = await cl.make_async(llm.generate)(user_question, context)
             msg.content = full_response
         
+        # Clean up double dots from LLM response (e.g. ".." → ".")
+        import re
+        full_response = re.sub(r'(?<!\.)\.\.(?!\.)', '.', full_response)
+        msg.content = full_response
+        
         # Final update
         await msg.update()
         

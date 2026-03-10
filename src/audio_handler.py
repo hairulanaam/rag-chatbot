@@ -2,11 +2,11 @@ import io
 import wave
 import numpy as np
 from groq import Groq
-from src.config import GROQ_API_KEY, STT_MODEL_NAME
+from src.config import GROQ_API_KEY, STT_MODEL_NAME, STT_PROMPT
 
 # Configuration for silence detection
-SILENCE_THRESHOLD = 2500  # Adjust for quieter/louder environments
-SILENCE_TIMEOUT = 2000.0  # ms of silence to consider turn finished
+SILENCE_THRESHOLD = 500  # Adjust for quieter/louder environments
+SILENCE_TIMEOUT = 3000.0  # ms of silence to consider turn finished
 MIN_AUDIO_DURATION = 1.0  # Minimum audio duration in seconds
 
 
@@ -24,7 +24,9 @@ class AudioHandler:
             file=audio_file,
             model=self.model,
             language="id",
-            response_format="text"
+            response_format="text",
+            prompt=STT_PROMPT,
+            temperature=0.0
         )
         
         return response.strip() if response else ""
