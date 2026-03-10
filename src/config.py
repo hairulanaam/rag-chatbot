@@ -32,5 +32,6 @@ FALLBACK_PHRASES = [
 # Dashboard Configuration
 BASE_DIR = Path(__file__).resolve().parent.parent
 DASHBOARD_SECRET_KEY = os.getenv("DASHBOARD_SECRET_KEY", "change-this-secret-key-in-production")
-DATABASE_PATH = str(BASE_DIR / "dashboard.db")
+TURSO_DATABASE_URL = os.getenv("TURSO_DATABASE_URL", "")
+TURSO_AUTH_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
 DATA_DIR = str(BASE_DIR / "data")

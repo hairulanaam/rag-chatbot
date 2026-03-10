@@ -1,27 +1,50 @@
 """
 Database module for dashboard authentication and query logging.
-Uses SQLite to store admin credentials with hashing and chatbot query logs.
+Uses Turso (libSQL) cloud database to store admin credentials with hashing and chatbot query logs.
 """
-import sqlite3
+import libsql_client
 import hashlib
 import secrets
 import os
-from src.config import DATABASE_PATH
+from src.config import TURSO_DATABASE_URL, TURSO_AUTH_TOKEN
+
+# Create a persistent sync client
+_client = None
 
 
-def get_connection():
-    """Get SQLite database connection."""
-    conn = sqlite3.connect(DATABASE_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+def _get_client():
+    """Get or create the libsql sync client."""
+    global _client
+    if _client is None:
+        # Convert libsql:// to https:// for HTTP transport
+        url = TURSO_DATABASE_URL
+        if url.startswith("libsql://"):
+            url = url.replace("libsql://", "https://", 1)
+        _client = libsql_client.create_client_sync(
+            url=url,
+            auth_token=TURSO_AUTH_TOKEN
+        )
+    return _client
+
+
+def _execute(sql: str, args=None):
+    """Execute a SQL statement and return the ResultSet."""
+    client = _get_client()
+    if args:
+        return client.execute(sql, args)
+    return client.execute(sql)
+
+
+def _rows_to_dicts(result_set) -> list:
+    """Convert ResultSet rows to list of dicts using column names."""
+    if not result_set.rows or not result_set.columns:
+        return []
+    return [dict(zip(result_set.columns, row)) for row in result_set.rows]
 
 
 def init_db():
     """Initialize database tables and create default admin if none exists."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
+    _execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
@@ -32,7 +55,7 @@ def init_db():
         )
     """)
     
-    cursor.execute("""
+    _execute("""
         CREATE TABLE IF NOT EXISTS query_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             query TEXT NOT NULL,
@@ -42,43 +65,30 @@ def init_db():
             retrieval_count INTEGER DEFAULT 0,
             top_source TEXT,
             response_time REAL,
+            resolved INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
-    conn.commit()
-
-    # Safe migration: add top_source column if it doesn't exist yet
-    try:
-        cursor.execute("ALTER TABLE query_logs ADD COLUMN top_source TEXT")
-        conn.commit()
-    except Exception:
-        pass  # Column already exists, ignore
-
-    # Safe migration: add response_time column if it doesn't exist yet
-    try:
-        cursor.execute("ALTER TABLE query_logs ADD COLUMN response_time REAL")
-        conn.commit()
-    except Exception:
-        pass  # Column already exists, ignore
-
-    # Safe migration: add resolved column if it doesn't exist yet
-    try:
-        cursor.execute("ALTER TABLE query_logs ADD COLUMN resolved INTEGER DEFAULT 0")
-        conn.commit()
-    except Exception:
-        pass  # Column already exists, ignore
+    # Safe migration: add columns if they don't exist yet
+    for col_sql in [
+        "ALTER TABLE query_logs ADD COLUMN top_source TEXT",
+        "ALTER TABLE query_logs ADD COLUMN response_time REAL",
+        "ALTER TABLE query_logs ADD COLUMN resolved INTEGER DEFAULT 0",
+    ]:
+        try:
+            _execute(col_sql)
+        except Exception:
+            pass  # Column already exists, ignore
     
     # Create default admin if no users exist
-    cursor.execute("SELECT COUNT(*) FROM users")
-    count = cursor.fetchone()[0]
+    rs = _execute("SELECT COUNT(*) FROM users")
+    count = rs.rows[0][0]
     
     if count == 0:
         create_user("admin", "admin123")
         print("📝 Default admin account created (username: admin, password: admin123)")
         print("⚠️  Please change the default password after first login!")
-    
-    conn.close()
 
 
 def _hash_password(password: str, salt: str = None) -> tuple:
@@ -93,37 +103,34 @@ def _hash_password(password: str, salt: str = None) -> tuple:
 def create_user(username: str, password: str) -> bool:
     """Create a new user account."""
     try:
-        conn = get_connection()
         password_hash, salt = _hash_password(password)
-        
-        conn.execute(
+        _execute(
             "INSERT INTO users (username, password_hash, salt) VALUES (?, ?, ?)",
-            (username, password_hash, salt)
+            [username, password_hash, salt]
         )
-        conn.commit()
-        conn.close()
         return True
-    except sqlite3.IntegrityError:
-        return False
+    except Exception as e:
+        if "UNIQUE constraint failed" in str(e) or "SQLITE_CONSTRAINT" in str(e):
+            return False
+        raise
 
 
 def verify_user(username: str, password: str) -> bool:
     """Verify user credentials."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute(
+    rs = _execute(
         "SELECT password_hash, salt FROM users WHERE username = ?",
-        (username,)
+        [username]
     )
-    row = cursor.fetchone()
-    conn.close()
     
-    if row is None:
+    if not rs.rows:
         return False
     
-    password_hash, _ = _hash_password(password, row["salt"])
-    return password_hash == row["password_hash"]
+    row = rs.rows[0]
+    stored_hash = row[0]
+    stored_salt = row[1]
+    
+    password_hash, _ = _hash_password(password, stored_salt)
+    return password_hash == stored_hash
 
 
 def change_password(username: str, new_password: str) -> dict:
@@ -131,15 +138,11 @@ def change_password(username: str, new_password: str) -> dict:
     if len(new_password) < 6:
         return {"success": False, "message": "Password baru minimal 6 karakter"}
     
-    conn = get_connection()
     password_hash, salt = _hash_password(new_password)
-    
-    conn.execute(
+    _execute(
         "UPDATE users SET password_hash = ?, salt = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?",
-        (password_hash, salt, username)
+        [password_hash, salt, username]
     )
-    conn.commit()
-    conn.close()
     
     return {"success": True, "message": "Password berhasil diubah"}
 
@@ -153,93 +156,67 @@ def log_query(query: str, response: str = None, status: str = "success",
               top_source: str = None, response_time: float = None):
     """Log a chatbot query and response to the database."""
     try:
-        conn = get_connection()
-        conn.execute(
+        _execute(
             """INSERT INTO query_logs (query, response, status, error_message, retrieval_count, top_source, response_time)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (query, response, status, error_message, retrieval_count, top_source, response_time)
+            [query, response, status, error_message, retrieval_count, top_source, response_time]
         )
-        conn.commit()
-        conn.close()
     except Exception as e:
         print(f"⚠️ Failed to log query: {e}")
 
 
 def get_query_logs(limit: int = 50, offset: int = 0) -> dict:
     """Get query logs with pagination."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    
     # Get total count
-    cursor.execute("SELECT COUNT(*) FROM query_logs")
-    total = cursor.fetchone()[0]
+    rs_count = _execute("SELECT COUNT(*) FROM query_logs")
+    total = rs_count.rows[0][0]
     
     # Get logs (newest first)
-    cursor.execute(
+    rs = _execute(
         "SELECT * FROM query_logs ORDER BY created_at DESC LIMIT ? OFFSET ?",
-        (limit, offset)
+        [limit, offset]
     )
-    rows = cursor.fetchall()
-    conn.close()
     
-    logs = []
-    for row in rows:
-        logs.append({
-            "id": row["id"],
-            "query": row["query"],
-            "response": row["response"],
-            "status": row["status"],
-            "error_message": row["error_message"],
-            "retrieval_count": row["retrieval_count"],
-            "top_source": row["top_source"],
-            "response_time": row["response_time"],
-            "resolved": row["resolved"] if "resolved" in row.keys() else 0,
-            "created_at": row["created_at"],
-        })
+    logs = _rows_to_dicts(rs)
+    # Ensure 'resolved' key exists with default value
+    for log in logs:
+        if "resolved" not in log:
+            log["resolved"] = 0
     
     return {"logs": logs, "total": total, "limit": limit, "offset": offset}
 
 
 def get_query_stats() -> dict:
     """Get query statistics for chart display."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
+    rs = _execute("""
         SELECT status, COUNT(*) as count
         FROM query_logs
         GROUP BY status
     """)
-    rows = cursor.fetchall()
     
-    cursor.execute("SELECT COUNT(*) FROM query_logs")
-    total = cursor.fetchone()[0]
+    rs_total = _execute("SELECT COUNT(*) FROM query_logs")
+    total = rs_total.rows[0][0]
     
     stats = {"success": 0, "no_result": 0, "error": 0}
-    for row in rows:
-        stats[row["status"]] = row["count"]
+    for row in rs.rows:
+        stats[row[0]] = row[1]
 
     # Average response time (all queries)
-    cursor.execute("""
+    rs_avg = _execute("""
         SELECT ROUND(AVG(response_time), 2) as avg_rt
         FROM query_logs
         WHERE response_time IS NOT NULL
     """)
-    avg_row = cursor.fetchone()
-    avg_response_time = avg_row["avg_rt"] if avg_row and avg_row["avg_rt"] is not None else None
+    avg_row = rs_avg.rows[0] if rs_avg.rows else None
+    avg_response_time = avg_row[0] if avg_row and avg_row[0] is not None else None
 
-    conn.close()
     return {"stats": stats, "total": total, "avg_response_time": avg_response_time}
 
 
 def resolve_query_log(log_id: int) -> dict:
     """Mark a query log as resolved (knowledge has been added)."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE query_logs SET resolved = 1 WHERE id = ?", (log_id,))
-    conn.commit()
-    updated = cursor.rowcount
-    conn.close()
+    rs = _execute("UPDATE query_logs SET resolved = 1 WHERE id = ?", [log_id])
+    updated = rs.rows_affected
     if updated == 0:
         return {"success": False, "message": "Log tidak ditemukan"}
     return {"success": True, "message": "Log ditandai sebagai resolved", "log_id": log_id}
@@ -247,28 +224,20 @@ def resolve_query_log(log_id: int) -> dict:
 
 def clear_query_logs() -> dict:
     """Delete all query logs."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM query_logs")
-    deleted = cursor.rowcount
-    conn.commit()
-    conn.close()
+    rs = _execute("DELETE FROM query_logs")
+    deleted = rs.rows_affected
     return {"success": True, "deleted_count": deleted}
 
 
 def get_daily_stats(days: int = 7) -> dict:
     """Get query count per day for the last N days."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
+    rs = _execute("""
         SELECT DATE(created_at) as day, COUNT(*) as count
         FROM query_logs
         WHERE created_at >= DATE('now', ? || ' days')
         GROUP BY DATE(created_at)
         ORDER BY day ASC
-    """, (f"-{days}",))
-    rows = cursor.fetchall()
-    conn.close()
+    """, [f"-{days}"])
 
     # Build a complete 7-day series (fill missing days with 0)
     from datetime import date, timedelta
@@ -276,9 +245,10 @@ def get_daily_stats(days: int = 7) -> dict:
     for i in range(days):
         d = (date.today() - timedelta(days=days - 1 - i)).isoformat()
         result[d] = 0
-    for row in rows:
-        if row["day"] in result:
-            result[row["day"]] = row["count"]
+    for row in rs.rows:
+        day_key = row[0]
+        if day_key in result:
+            result[day_key] = row[1]
 
     return {
         "days": list(result.keys()),
@@ -289,9 +259,7 @@ def get_daily_stats(days: int = 7) -> dict:
 
 def get_topic_stats() -> dict:
     """Get query frequency grouped by top_source document."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
+    rs = _execute("""
         SELECT top_source, COUNT(*) as count
         FROM query_logs
         WHERE status = 'success' AND top_source IS NOT NULL AND top_source != ''
@@ -299,8 +267,6 @@ def get_topic_stats() -> dict:
         ORDER BY count DESC
         LIMIT 8
     """)
-    rows = cursor.fetchall()
-    conn.close()
     return {
-        "topics": [{"source": row["top_source"], "count": row["count"]} for row in rows]
+        "topics": [{"source": row[0], "count": row[1]} for row in rs.rows]
     }
