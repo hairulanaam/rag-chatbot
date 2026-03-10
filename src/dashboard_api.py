@@ -11,18 +11,18 @@ from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form, D
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from src.config import DATA_DIR, DASHBOARD_SECRET_KEY
-from src.database import verify_user, change_password, init_db, get_query_logs, get_query_stats, clear_query_logs, get_daily_stats, get_topic_stats, resolve_query_log
+from src.config import DASHBOARD_SECRET_KEY
+from src.database import (
+    verify_user, change_password,
+    get_query_logs, get_query_stats, clear_query_logs, get_daily_stats, get_topic_stats, resolve_query_log,
+    save_document, delete_document_record, list_documents_db, get_document_db,
+    document_exists, get_all_documents_content, get_document_count,
+)
 from src.ingestion import (
-    index_single_document,
     reindex_document,
     delete_document_vectors,
     get_index_stats,
     check_documents_indexed,
-    run_ingestion,
-    get_markdown_files,
-    process_documents,
-    upload_to_pinecone,
 )
 
 router = APIRouter()
@@ -127,24 +127,12 @@ async def api_change_password(data: ChangePasswordRequest, username: str = Depen
 # Document Helpers
 # ============================================================
 
-def _validate_and_resolve(filename: str) -> Path:
-    """Validate filename and return safe resolved path inside DATA_DIR."""
-    # 1. Cek karakter path traversal SEBELUM path dibuat
+def _validate_filename(filename: str):
+    """Validate filename format."""
     if not filename or ".." in filename or "/" in filename or "\\" in filename:
         raise HTTPException(status_code=400, detail="Nama file tidak valid")
-    
-    # 2. Pastikan ekstensi .md
     if not filename.endswith(".md"):
         raise HTTPException(status_code=400, detail="Hanya file .md yang diperbolehkan")
-    
-    # 3. Bangun path dan resolve
-    file_path = (Path(DATA_DIR) / filename).resolve()
-    
-    # 4. Pastikan path hasil resolve masih di dalam DATA_DIR
-    if not str(file_path).startswith(str(Path(DATA_DIR).resolve())):
-        raise HTTPException(status_code=400, detail="Nama file tidak valid")
-    
-    return file_path
 
 
 # ============================================================
@@ -153,89 +141,69 @@ def _validate_and_resolve(filename: str) -> Path:
 
 @router.get("/api/documents")
 async def list_documents(username: str = Depends(get_current_user)):
-    """List all markdown documents in the data directory."""
-    data_path = Path(DATA_DIR)
-    
-    if not data_path.exists():
-        return {"documents": []}
-    
-    documents = []
-    for f in sorted(data_path.glob("*.md")):
-        stat = f.stat()
-        documents.append({
-            "filename": f.name,
-            "size_bytes": stat.st_size,
-            "modified_at": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
-            "size_display": _format_size(stat.st_size),
-        })
-    
-    return {"documents": documents}
+    """List all markdown documents from Turso."""
+    docs = list_documents_db()
+    for doc in docs:
+        doc["size_display"] = _format_size(doc["size_bytes"])
+        doc["modified_at"] = doc.pop("updated_at", "")
+    return {"documents": docs}
 
 
 @router.get("/api/documents/indexed")
 async def get_indexed_status(username: str = Depends(get_current_user)):
     """Check which documents are indexed in Pinecone."""
-    data_path = Path(DATA_DIR)
-    if not data_path.exists():
+    docs = list_documents_db()
+    if not docs:
         return {"indexed": {}}
-    file_stems = [f.stem for f in data_path.glob("*.md")]
-    if not file_stems:
-        return {"indexed": {}}
+    file_stems = [Path(d["filename"]).stem for d in docs]
     return check_documents_indexed(file_stems)
 
 
 @router.get("/api/documents/{filename}")
 async def get_document(filename: str, username: str = Depends(get_current_user)):
-    """Read content of a specific markdown document."""
-    file_path = _validate_and_resolve(filename)
-    
-    if not file_path.exists():
+    """Read content of a specific markdown document from Turso."""
+    _validate_filename(filename)
+    doc = get_document_db(filename)
+    if not doc:
         raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
     
-    content = file_path.read_text(encoding="utf-8")
-    stat = file_path.stat()
-    
     return {
-        "filename": filename,
-        "content": content,
-        "size_bytes": stat.st_size,
-        "modified_at": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+        "filename": doc["filename"],
+        "content": doc["content"],
+        "size_bytes": doc["size_bytes"],
+        "modified_at": doc["updated_at"],
     }
 
 
 @router.post("/api/documents")
 async def create_document(data: DocumentContent, username: str = Depends(get_current_user)):
-    """Create a new markdown document."""
+    """Create a new markdown document in Turso."""
     if not data.filename:
         raise HTTPException(status_code=400, detail="Nama file diperlukan")
     
-    # Sanitize filename
     filename = data.filename.strip()
     if not filename.endswith(".md"):
         filename += ".md"
     
-    file_path = _validate_and_resolve(filename)
+    _validate_filename(filename)
     
-    if file_path.exists():
+    if document_exists(filename):
         raise HTTPException(status_code=409, detail="File sudah ada. Gunakan PUT untuk mengedit.")
     
-    # Create data directory if it doesn't exist
-    Path(DATA_DIR).mkdir(parents=True, exist_ok=True)
-    
-    file_path.write_text(data.content, encoding="utf-8")
+    save_document(filename, data.content)
     
     return {"success": True, "message": f"Dokumen '{filename}' berhasil dibuat", "filename": filename}
 
 
 @router.put("/api/documents/{filename}")
 async def update_document(filename: str, data: DocumentContent, username: str = Depends(get_current_user)):
-    """Update content of an existing document."""
-    file_path = _validate_and_resolve(filename)
+    """Update content of an existing document in Turso."""
+    _validate_filename(filename)
     
-    if not file_path.exists():
+    if not document_exists(filename):
         raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
     
-    file_path.write_text(data.content, encoding="utf-8")
+    save_document(filename, data.content)
     
     return {"success": True, "message": f"Dokumen '{filename}' berhasil diperbarui"}
 
@@ -243,18 +211,18 @@ async def update_document(filename: str, data: DocumentContent, username: str = 
 @router.delete("/api/documents/{filename}")
 async def delete_document(filename: str, username: str = Depends(get_current_user)):
     """Delete a document and its associated vectors from Pinecone."""
-    file_path = _validate_and_resolve(filename)
+    _validate_filename(filename)
     
-    if not file_path.exists():
+    if not document_exists(filename):
         raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
     
-    file_prefix = file_path.stem
+    file_prefix = Path(filename).stem
     
     # Delete vectors from Pinecone
     vector_result = delete_document_vectors(file_prefix)
     
-    # Delete file
-    file_path.unlink()
+    # Delete from Turso
+    delete_document_record(filename)
     
     return {
         "success": True,
@@ -270,12 +238,22 @@ async def delete_document(filename: str, username: str = Depends(get_current_use
 @router.post("/api/documents/{filename}/index")
 async def index_document(filename: str, username: str = Depends(get_current_user)):
     """Index or re-index a specific document to Pinecone."""
-    file_path = _validate_and_resolve(filename)
-    
-    if not file_path.exists():
+    _validate_filename(filename)
+    doc = get_document_db(filename)
+    if not doc:
         raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
     
-    result = reindex_document(str(file_path))
+    # Write temp file for indexing (ingestion reads from file)
+    import tempfile
+    temp_dir = Path(tempfile.mkdtemp())
+    temp_file = temp_dir / filename
+    temp_file.write_text(doc["content"], encoding="utf-8")
+    
+    try:
+        result = reindex_document(str(temp_file))
+    finally:
+        temp_file.unlink(missing_ok=True)
+        temp_dir.rmdir()
     
     if not result.get("success"):
         raise HTTPException(status_code=500, detail=result.get("error", "Gagal mengindex dokumen"))
@@ -290,28 +268,41 @@ async def index_document(filename: str, username: str = Depends(get_current_user
 
 @router.post("/api/index/all")
 async def index_all_documents(username: str = Depends(get_current_user)):
-    """Re-index all documents in the data directory."""
+    """Re-index all documents from Turso."""
     try:
-        file_paths = get_markdown_files(DATA_DIR)
+        all_docs = get_all_documents_content()
         
-        if not file_paths:
+        if not all_docs:
             return {"success": True, "message": "Tidak ada dokumen untuk di-index", "total_chunks": 0}
         
+        import tempfile
+        temp_dir = Path(tempfile.mkdtemp())
         total_chunks = 0
         results = []
         
-        for file_path in file_paths:
-            result = reindex_document(file_path)
-            results.append({
-                "file": Path(file_path).name,
-                "success": result.get("success", False),
-                "chunks_count": result.get("chunks_count", 0),
-            })
-            total_chunks += result.get("chunks_count", 0)
+        try:
+            for doc in all_docs:
+                temp_file = temp_dir / doc["filename"]
+                temp_file.write_text(doc["content"], encoding="utf-8")
+                
+                result = reindex_document(str(temp_file))
+                results.append({
+                    "file": doc["filename"],
+                    "success": result.get("success", False),
+                    "chunks_count": result.get("chunks_count", 0),
+                })
+                total_chunks += result.get("chunks_count", 0)
+                
+                temp_file.unlink(missing_ok=True)
+        finally:
+            # Clean up remaining temp files
+            for f in temp_dir.glob("*"):
+                f.unlink(missing_ok=True)
+            temp_dir.rmdir()
         
         return {
             "success": True,
-            "message": f"Berhasil mengindex {len(file_paths)} dokumen ({total_chunks} chunks total)",
+            "message": f"Berhasil mengindex {len(all_docs)} dokumen ({total_chunks} chunks total)",
             "total_chunks": total_chunks,
             "details": results,
         }
@@ -328,11 +319,7 @@ async def index_status(username: str = Depends(get_current_user)):
     if not stats.get("success"):
         raise HTTPException(status_code=500, detail=stats.get("error", "Gagal mengambil status index"))
     
-    # Also count local documents
-    data_path = Path(DATA_DIR)
-    local_docs = len(list(data_path.glob("*.md"))) if data_path.exists() else 0
-    
-    stats["local_document_count"] = local_docs
+    stats["local_document_count"] = get_document_count()
     return stats
 
 
@@ -360,8 +347,8 @@ async def upload_file(
         )
     
     # Save uploaded file temporarily
-    temp_dir = Path(DATA_DIR).parent / "temp_uploads"
-    temp_dir.mkdir(exist_ok=True)
+    import tempfile
+    temp_dir = Path(tempfile.mkdtemp())
     temp_path = temp_dir / file.filename
     
     try:
@@ -379,8 +366,8 @@ async def upload_file(
         markdown_content = "\n\n".join(doc.text for doc in documents if doc.text)
         
         output_filename = Path(file.filename).stem + ".md"
-        output_path = Path(DATA_DIR) / output_filename
-        output_path.write_text(markdown_content, encoding="utf-8")
+        # Save to Turso (single source of truth)
+        save_document(output_filename, markdown_content)
         
         return {
             "success": True,

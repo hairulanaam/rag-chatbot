@@ -70,6 +70,16 @@ def init_db():
         )
     """)
 
+    _execute("""
+        CREATE TABLE IF NOT EXISTS documents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT UNIQUE NOT NULL,
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     # Safe migration: add columns if they don't exist yet
     for col_sql in [
         "ALTER TABLE query_logs ADD COLUMN top_source TEXT",
@@ -270,3 +280,111 @@ def get_topic_stats() -> dict:
     return {
         "topics": [{"source": row[0], "count": row[1]} for row in rs.rows]
     }
+
+
+# ============================================================
+# Document Storage (Turso as single source of truth)
+# ============================================================
+
+def save_document(filename: str, content: str):
+    """Save or update a document in Turso."""
+    try:
+        rs = _execute(
+            "UPDATE documents SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE filename = ?",
+            [content, filename]
+        )
+        if rs.rows_affected == 0:
+            _execute(
+                "INSERT INTO documents (filename, content) VALUES (?, ?)",
+                [filename, content]
+            )
+    except Exception as e:
+        print(f"⚠️ Failed to save document: {e}")
+
+
+def delete_document_record(filename: str):
+    """Delete a document from Turso."""
+    try:
+        _execute("DELETE FROM documents WHERE filename = ?", [filename])
+    except Exception as e:
+        print(f"⚠️ Failed to delete document: {e}")
+
+
+def list_documents_db() -> list:
+    """List all documents stored in Turso.
+    Returns list of dicts with filename, size_bytes, updated_at.
+    """
+    rs = _execute("""
+        SELECT filename, LENGTH(content) as size_bytes, updated_at
+        FROM documents
+        ORDER BY filename ASC
+    """)
+    docs = []
+    for row in rs.rows:
+        docs.append({
+            "filename": row[0],
+            "size_bytes": row[1] or 0,
+            "updated_at": row[2] or "",
+        })
+    return docs
+
+
+def get_document_db(filename: str) -> dict | None:
+    """Get a single document's content and metadata from Turso.
+    Returns dict with filename, content, size_bytes, updated_at or None.
+    """
+    rs = _execute(
+        "SELECT filename, content, LENGTH(content) as size_bytes, updated_at FROM documents WHERE filename = ?",
+        [filename]
+    )
+    if not rs.rows:
+        return None
+    row = rs.rows[0]
+    return {
+        "filename": row[0],
+        "content": row[1],
+        "size_bytes": row[2] or 0,
+        "updated_at": row[3] or "",
+    }
+
+
+def document_exists(filename: str) -> bool:
+    """Check if a document exists in Turso."""
+    rs = _execute("SELECT COUNT(*) FROM documents WHERE filename = ?", [filename])
+    return rs.rows[0][0] > 0
+
+
+def get_all_documents_content() -> list:
+    """Get all documents with their content from Turso.
+    Returns list of dicts with filename and content.
+    """
+    rs = _execute("SELECT filename, content FROM documents")
+    return [{"filename": row[0], "content": row[1]} for row in rs.rows]
+
+
+def get_document_count() -> int:
+    """Get total number of documents in Turso."""
+    rs = _execute("SELECT COUNT(*) FROM documents")
+    return rs.rows[0][0]
+
+
+def sync_local_to_cloud(data_dir: str):
+    """One-time sync: upload existing local markdown files to Turso.
+    Only uploads files that don't already exist in the cloud.
+    """
+    from pathlib import Path
+    data_path = Path(data_dir)
+    if not data_path.exists():
+        return 0
+
+    synced = 0
+    for f in data_path.glob("*.md"):
+        if not document_exists(f.name):
+            content = f.read_text(encoding="utf-8")
+            save_document(f.name, content)
+            synced += 1
+
+    if synced > 0:
+        print(f"☁️ Synced {synced} local document(s) to cloud database")
+    return synced
+

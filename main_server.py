@@ -3,10 +3,14 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from chainlit.utils import mount_chainlit
 from src.dashboard_api import router as dashboard_router
-from src.database import init_db
+from src.database import init_db, sync_local_to_cloud
+from src.config import DATA_DIR
 
 # Initialize database
 init_db()
+
+# One-time sync: upload existing local files to Turso (if not yet in cloud)
+sync_local_to_cloud(DATA_DIR)
 
 app = FastAPI(title="Chatbot Layanan Informasi Sekolah")
 
