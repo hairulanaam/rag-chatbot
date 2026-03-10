@@ -6,20 +6,24 @@
 # Virtual environment
 venv/
 .venv/
-env/
 
 # Python cache
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
 
 # IDE
 .vscode/
 .idea/
 
-# Chainlit
+# Chainlit cache
 .chainlit/.cache/
 
 # Logs
 *.log
+
+# Test files
+test_*.py
+cosine_similarity_log.py
+test_query_embedding.py
+note.txt
+rag_chain_log.py
