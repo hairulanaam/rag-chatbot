@@ -3,7 +3,7 @@ import numpy as np
 import time
 from src.rag_chain import PineconeRetriever, GroqLLM, format_docs, RateLimitError
 from src.database import log_query
-from src.audio_handler import AudioHandler, SILENCE_THRESHOLD, SILENCE_TIMEOUT, MIN_AUDIO_DURATION
+from src.audio_handler import AudioHandler, MIN_AUDIO_DURATION
 from src.config import FALLBACK_PHRASES
 
 # Configuration
@@ -70,63 +70,20 @@ async def on_suggestion(action: cl.Action):
 async def on_audio_start():
     """Initialize audio recording session"""
     cl.user_session.set("audio_chunks", [])
-    cl.user_session.set("silent_duration_ms", 0)
-    cl.user_session.set("is_speaking", False)
-    cl.user_session.set("last_elapsed_time", 0)
-    cl.user_session.set("audio_auto_ended", False)
     print("🎤 Audio recording started")
     return True
 
 
 @cl.on_audio_chunk
 async def on_audio_chunk(chunk: cl.InputAudioChunk):
-    """Process incoming audio chunks with silence detection"""
-    # Skip if already auto-ended by silence detection
-    if cl.user_session.get("audio_auto_ended"):
-        return
-    
+    """Collect incoming audio chunks (user stops recording manually)"""
     audio_chunks = cl.user_session.get("audio_chunks")
     
-    # Convert chunk data to numpy array (used for both storage and energy calculation)
+    # Convert chunk data to numpy array and store
     audio_chunk = np.frombuffer(chunk.data, dtype=np.int16)
     
     if audio_chunks is not None:
         audio_chunks.append(audio_chunk)
-    
-    # If this is the first chunk, initialize timers
-    if chunk.isStart:
-        cl.user_session.set("last_elapsed_time", chunk.elapsedTime)
-        cl.user_session.set("is_speaking", True)
-        return
-    
-    # Get session state
-    last_elapsed_time = cl.user_session.get("last_elapsed_time")
-    silent_duration_ms = cl.user_session.get("silent_duration_ms")
-    is_speaking = cl.user_session.get("is_speaking")
-    
-    # Calculate time difference
-    time_diff_ms = chunk.elapsedTime - last_elapsed_time
-    cl.user_session.set("last_elapsed_time", chunk.elapsedTime)
-    
-    # Compute audio energy (RMS) using NumPy — replaces deprecated audioop
-    audio_energy = int(np.sqrt(np.mean(audio_chunk.astype(np.float64) ** 2)))
-    
-    if audio_energy < SILENCE_THRESHOLD:
-        # Audio is silent
-        silent_duration_ms += time_diff_ms
-        cl.user_session.set("silent_duration_ms", silent_duration_ms)
-        
-        # Auto-process if silence exceeds timeout after user has spoken
-        if silent_duration_ms >= SILENCE_TIMEOUT and is_speaking:
-            cl.user_session.set("is_speaking", False)
-            cl.user_session.set("audio_auto_ended", True)
-            print("🔇 Silence detected after speech — auto-processing audio")
-            await process_audio_input()
-    else:
-        # Audio is active, reset silence timer
-        cl.user_session.set("silent_duration_ms", 0)
-        if not is_speaking:
-            cl.user_session.set("is_speaking", True)
 
 
 # Shared audio processing function (used by both silence auto-end and manual stop)
@@ -137,6 +94,13 @@ async def process_audio_input():
     
     if not audio_chunks or not audio_handler:
         await cl.Message(content="⚠️ Tidak ada audio yang terekam.").send()
+        return
+    
+    # Check if audio has enough energy to be speech (reject silence/noise early)
+    if not audio_handler.has_speech_energy(audio_chunks):
+        await cl.Message(
+            content="⚠️ Tidak terdeteksi suara. Silakan bicara lebih keras dan coba lagi."
+        ).send()
         return
     
     # Convert chunks to WAV
@@ -160,7 +124,7 @@ async def process_audio_input():
         transcription = await cl.make_async(audio_handler.transcribe)(audio_buffer)
         
         if not transcription:
-            status_msg.content = "⚠️ Tidak dapat mentranskripsi audio. Silakan coba lagi."
+            status_msg.content = "Tidak terdeteksi pertanyaan. Silakan bicara dengan jelas dan coba lagi."
             await status_msg.update()
             return
         
@@ -192,11 +156,6 @@ async def process_audio_input():
 @cl.on_audio_end
 async def on_audio_end():
     """Process completed audio recording - transcribe and send to RAG"""
-    # Skip if already auto-processed by silence detection
-    if cl.user_session.get("audio_auto_ended"):
-        print("🔇 Audio already auto-processed by silence detection, skipping on_audio_end")
-        return
-    
     await process_audio_input()
 
 
