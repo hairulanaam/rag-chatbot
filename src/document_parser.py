@@ -9,11 +9,8 @@ from src.config import LLAMA_PARSE_API_KEY
 
 SUPPORTED_EXTENSIONS = {
     ".pdf",
-    ".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".gif", ".webp",
+    ".jpg", ".jpeg", ".png",
     ".docx", ".doc",
-    ".pptx", ".ppt",
-    ".xlsx", ".xls",
-    ".html", ".htm",
     ".txt",
 }
 

@@ -187,10 +187,9 @@
                         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
                             <div class="upload-icon"><i data-lucide="folder-open"></i></div>
                             <p>Klik atau drag & drop file di sini</p>
-                            <p class="upload-hint">Format: PDF, JPG, PNG, DOCX, TXT</p>
+                            <p class="upload-hint">Format: PDF, JPG, JPEG, PNG, DOCX, TXT</p>
                         </div>
-                        <input type="file" id="fileInput" style="display: none;"
-                            accept=".pdf,.jpg,.jpeg,.png,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.html,.htm,.txt,.bmp,.tiff,.gif,.webp">
+                        <input type="file" id="fileInput" style="display: none;">
                     </div>
 
                     <!-- Manual Create Tab -->
@@ -209,8 +208,8 @@
                         <div class="btn-group">
                             <button class="btn btn-primary" onclick="createDocument(false)"><i data-lucide="save"></i>
                                 Simpan</button>
-                            <button class="btn btn-success" onclick="createDocument(true)"><i data-lucide="save"></i>
-                                Simpan & Index</button>
+                            <button class="btn btn-success" onclick="createDocument(true)"><i data-lucide="upload-cloud"></i>
+                                Simpan & Unggah</button>
                         </div>
                     </div>
                 </div>
@@ -223,7 +222,7 @@
                             <button class="btn btn-primary btn-sm" onclick="toggleCreateSection()"><i
                                     data-lucide="plus"></i> Tambah</button>
                             <button class="btn btn-success btn-sm" onclick="indexAllDocuments()"><i
-                                    data-lucide="zap"></i> Index Semua</button>
+                                    data-lucide="upload-cloud"></i> Unggah Semua</button>
                         </div>
                     </div>
                     <div class="table-container">
@@ -233,7 +232,7 @@
                                     <th>Nama File</th>
                                     <th>Ukuran</th>
                                     <th>Terakhir Diubah</th>
-                                    <th style="width:120px">Status Index</th>
+                                    <th style="width:120px">Status Unggah</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -262,8 +261,8 @@
                     <div class="btn-group">
                         <button class="btn btn-primary" onclick="saveDocument()"><i data-lucide="save"></i>
                             Simpan</button>
-                        <button class="btn btn-success" onclick="saveAndIndex()"><i data-lucide="save"></i> Simpan &
-                            Index</button>
+                        <button class="btn btn-success" onclick="saveAndIndex()"><i data-lucide="upload-cloud"></i> Simpan &
+                            Unggah</button>
                         <button class="btn btn-outline" onclick="navigateTo('documents')"><i
                                 data-lucide="arrow-left"></i> Kembali</button>
                     </div>
@@ -341,8 +340,8 @@
             </div>
             <div class="knowledge-modal-footer">
                 <!-- <button class="btn btn-outline" onclick="closeKnowledgeModal()">Batal</button> -->
-                <button class="btn btn-success" onclick="submitKnowledge(true)"><i data-lucide="zap"></i> Simpan &
-                    Index</button>
+                <button class="btn btn-success" onclick="submitKnowledge(true)"><i data-lucide="upload-cloud"></i> Simpan &
+                    Unggah</button>
             </div>
         </div>
     </div>

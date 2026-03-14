@@ -274,7 +274,7 @@ async function loadDocuments() {
                 <td>
                     <div class="btn-group">
                         <button class="btn btn-outline btn-sm" onclick="editDocument('${doc.filename}')" title="Edit"><i data-lucide="pencil"></i></button>
-                        <button class="btn btn-success btn-sm" onclick="indexDocument('${doc.filename}')" title="Index"><i data-lucide="zap"></i></button>
+                        <button class="btn btn-success btn-sm" onclick="indexDocument('${doc.filename}')" title="Unggah"><i data-lucide="upload-cloud"></i></button>
                         <button class="btn btn-danger btn-sm" onclick="deleteDocument('${doc.filename}')" title="Hapus"><i data-lucide="trash-2"></i></button>
                     </div>
                 </td>
@@ -338,9 +338,9 @@ async function saveAndIndex() {
             body: JSON.stringify({ content }),
         });
 
-        showLoading('Mengindex dokumen...');
+        showLoading('Mengunggah dokumen...');
         const result = await api(`/api/documents/${currentEditFile}/index`, { method: 'POST' });
-        showToast(`Disimpan & di-index (${result.chunks_count} chunks)`, 'success');
+        showToast(`Disimpan & diunggah (${result.chunks_count} chunks)`, 'success');
     } catch (err) {
         showToast(err.message, 'error');
     } finally {
@@ -350,9 +350,9 @@ async function saveAndIndex() {
 
 async function indexDocument(filename) {
     try {
-        showLoading(`Mengindex ${filename}...`);
+        showLoading(`Mengunggah ${filename}...`);
         const result = await api(`/api/documents/${filename}/index`, { method: 'POST' });
-        showToast(`${filename} berhasil di-index (${result.chunks_count} chunks)`, 'success');
+        showToast(`${filename} berhasil diunggah (${result.chunks_count} chunks)`, 'success');
     } catch (err) {
         showToast(err.message, 'error');
     } finally {
@@ -382,14 +382,14 @@ async function deleteDocument(filename) {
 
 async function indexAllDocuments() {
     const confirmed = await showConfirm(
-        'Index Semua Dokumen?',
-        'Proses ini akan menghapus semua vector lama dan mengindex ulang semua dokumen. Proses ini mungkin memakan waktu beberapa menit.'
+        'Unggah Semua Dokumen?',
+        'Proses ini akan menghapus semua vector lama dan mengunggah ulang semua dokumen. Proses ini mungkin memakan waktu beberapa menit.'
     );
 
     if (!confirmed) return;
 
     try {
-        showLoading('Mengindex semua dokumen...');
+        showLoading('Mengunggah semua dokumen...');
         const result = await api('/api/index/all', { method: 'POST' });
         showToast(result.message, 'success');
     } catch (err) {
@@ -425,10 +425,10 @@ async function createDocument(andIndex = false) {
         });
 
         if (andIndex) {
-            showLoading('Mengindex dokumen...');
+            showLoading('Mengunggah dokumen...');
             const realFilename = result.filename;
             await api(`/api/documents/${realFilename}/index`, { method: 'POST' });
-            showToast(`Dokumen '${realFilename}' berhasil dibuat dan di-index`, 'success');
+            showToast(`Dokumen '${realFilename}' berhasil dibuat dan diunggah`, 'success');
         } else {
             showToast(result.message, 'success');
         }
@@ -465,7 +465,19 @@ fileInput.addEventListener('change', () => {
     if (fileInput.files.length > 0) uploadFile(fileInput.files[0]);
 });
 
+const SUPPORTED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.docx', '.doc', '.txt'];
+
 async function uploadFile(file) {
+    // Validasi format file sebelum upload
+    const fileName = file.name.toLowerCase();
+    const fileExt = '.' + fileName.split('.').pop();
+    if (!SUPPORTED_EXTENSIONS.includes(fileExt)) {
+        const supported = SUPPORTED_EXTENSIONS.map(e => e.toUpperCase().replace('.', '')).join(', ');
+        showToast(`Format file "${fileExt}" tidak didukung. Format yang didukung: ${supported}`, 'error', 5000);
+        fileInput.value = '';
+        return;
+    }
+
     try {
         showLoading(`Mengupload & memproses ${file.name}...`);
 
@@ -960,11 +972,11 @@ async function submitKnowledge(andIndex = false) {
 
         // Optionally re-index
         if (andIndex) {
-            showLoading('Mengindex dokumen...');
+            showLoading('Mengunggah dokumen...');
             const result = await api(`/api/documents/${targetFilename}/index`, { method: 'POST' });
-            showToast(`Knowledge berhasil ditambahkan & di-index (${result.chunks_count} chunks)`, 'success');
+            showToast(`Knowledge berhasil ditambahkan & diunggah (${result.chunks_count} chunks)`, 'success');
         } else {
-            showToast('Knowledge berhasil ditambahkan. Jangan lupa index ulang dokumen agar aktif di chatbot.', 'success', 5000);
+            showToast('Knowledge berhasil ditambahkan. Jangan lupa unggah ulang dokumen agar aktif di chatbot.', 'success', 5000);
         }
 
         closeKnowledgeModal();
