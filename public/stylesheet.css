@@ -399,6 +399,13 @@ div[data-label-injected="true"]>button[id]:hover {
 }
 
 /* Close button - geser sedikit ke bawah */
-[role="dialog"] > button.absolute {
-    top: 1.25rem !important;
+[role="dialog"] button.absolute.right-4.top-4 {
+    top: 3.5rem !important;
+    right: 2rem !important;
+}
+
+/* Perbesar ukuran icon close button */
+[role="dialog"] button.absolute.right-4.top-4 svg {
+    width: 32px !important;
+    height: 32px !important;
 }

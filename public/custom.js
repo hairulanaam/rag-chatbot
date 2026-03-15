@@ -178,6 +178,14 @@
   function openReadmePage() {
     console.log("[Readme Popup] Trying to open Readme page...");
 
+    // Coba temukan tombol menggunakan ID resminya
+    var readmeBtn = document.getElementById("readme-button");
+    if (readmeBtn) {
+      console.log("[Readme Popup] Found readme button by ID, clicking");
+      readmeBtn.click();
+      return;
+    }
+
     // Strategi 1: Cari link dengan href mengandung "readme"
     var readmeLink = document.querySelector('a[href*="readme"]');
     if (readmeLink) {
@@ -186,15 +194,17 @@
       return;
     }
 
-    // Strategi 2: Cari semua button dan link, cari yang mengandung ikon info / readme
+    // Strategi 2: Cari semua button dan link yang atribut aria/teksnya mirip
     var allClickables = document.querySelectorAll("a, button");
     for (var i = 0; i < allClickables.length; i++) {
       var el = allClickables[i];
       var text = (el.textContent || "").toLowerCase().trim();
       var ariaLabel = (el.getAttribute("aria-label") || "").toLowerCase();
       var href = (el.getAttribute("href") || "").toLowerCase();
+      // tambahkan pencarian 'panduan' akibat dari modifikasi teks label button
       if (
         text.includes("readme") ||
+        text.includes("panduan") ||
         ariaLabel.includes("readme") ||
         href.includes("readme")
       ) {
@@ -211,5 +221,72 @@
 
   // Tampilkan popup segera setelah halaman diload
   console.log("[Readme Popup] Waiting for page to be ready...");
-  setTimeout(showReadmePopup, 1000);
+  setTimeout(showReadmePopup, 1500);
+})();
+
+// Menangkap event klik pada tombol Kembali di Readme Modal
+(function() {
+  document.addEventListener('click', function(e) {
+    if (!e.target) return;
+    
+    // Cek apakah klik berasal dari teks/link/button "Kembali ke Halaman Utama"
+    var textPContent = e.target.textContent || e.target.innerText || "";
+    var isBackButtonText = textPContent.includes('Kembali ke Halaman Utama');
+    var isBackButtonId = (e.target.id === 'btn-close-readme');
+    
+    // Cek juga parent (misal klik icon / span di dalam button)
+    var closestInteractive = e.target.closest('a') || e.target.closest('button');
+    var interactiveHasText = closestInteractive && (closestInteractive.textContent || "").includes('Kembali ke Halaman Utama');
+    var interactiveHasId = closestInteractive && (closestInteractive.id === 'btn-close-readme');
+    
+    if (isBackButtonText || isBackButtonId || interactiveHasText || interactiveHasId) {
+      e.preventDefault(); // cegah default navigasi form action / a href
+      
+      // Cari tombol close asli milik radix dialog (tombol ⨉ di pojok kanan atas dialog modal chainlit)
+      var closeBtn = document.querySelector('[role="dialog"] button.absolute, button.absolute.right-4.top-4');
+      
+      if (closeBtn) {
+        closeBtn.click();
+      } else {
+        // Fallback: tutup modal dengan mengirim event Escape ke dokumen radix
+        document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true}));
+      }
+    }
+  });
+})();
+
+// Mengubah teks label tombol "Readme" menjadi "Panduan"
+(function() {
+  function updateReadmeLabel() {
+    // 1. Ubah label tombol di header
+    var readmeBtn = document.getElementById('readme-button');
+    if (readmeBtn) {
+      var btnSpan = readmeBtn.querySelector('span');
+      if (btnSpan && btnSpan.textContent === 'Readme') {
+        btnSpan.textContent = 'Panduan';
+      }
+    }
+    
+    // 2. Ubah judul di dalam modal Readme itu sendiri (elemen <h2> dengan id radix-*)
+    var dialogTitles = document.querySelectorAll('[role="dialog"] h2[id^="radix-"] span, [role="dialog"] h2[id^="radix-"]');
+    for (var i = 0; i < dialogTitles.length; i++) {
+        var el = dialogTitles[i];
+        if (el.textContent === 'Readme') {
+            el.textContent = 'Panduan';
+        }
+    }
+  }
+
+  // Jalankan fungsi awal untuk mengecek jika elemen sudah ada
+  updateReadmeLabel();
+
+  // Awasi DOM untuk perubahan (karena elemen di-render asinkron oleh Chainlit UI)
+  var observer = new MutationObserver(function() {
+    updateReadmeLabel();
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
 })();

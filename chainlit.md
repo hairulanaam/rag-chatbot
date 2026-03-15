@@ -43,3 +43,9 @@ Jika chatbot tidak dapat menemukan informasi yang Anda cari, silakan menghubungi
 * **Alamat:** Jl. Gunung Bromo/Pasar Hewan Sumberkolak, Panarukan, Situbondo.
 * **Kontak Layanan Informasi** O822 2893 2660
 * **Kontak Bendahara Sekolah** O812 1114 2012
+
+<div style="margin-bottom: 10px; margin-top: 10px; display: flex; justify-content: center; width: 100%;">
+  <button id="btn-close-readme" style="display: flex; justify-content: center; align-items: center; padding: 8px 16px; background-color: #ffffff; color: #000000; text-decoration: none; border: none; border-radius: 6px; font-weight: bold; font-family: sans-serif; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer;">
+    Kembali
+  </button>
+</div>
