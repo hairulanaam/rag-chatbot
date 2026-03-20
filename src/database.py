@@ -6,6 +6,7 @@ import libsql_client
 import hashlib
 import secrets
 import os
+from src.timezone_utils import now_wib_str, date_today_wib
 from src.config import TURSO_DATABASE_URL, TURSO_AUTH_TOKEN
 
 # Create a persistent sync client
@@ -42,16 +43,78 @@ def _rows_to_dicts(result_set) -> list:
     return [dict(zip(result_set.columns, row)) for row in result_set.rows]
 
 
+def _migrate_timestamps_to_wib():
+    """Migrasi one-time: konversi timestamp UTC ke WIB (+7 jam) untuk data yang sudah ada."""
+    MIGRATION_NAME = "timestamps_utc_to_wib"
+    
+    # Cek apakah migrasi sudah pernah dijalankan
+    try:
+        rs = _execute(
+            "SELECT COUNT(*) FROM _migrations WHERE name = ?",
+            [MIGRATION_NAME]
+        )
+        if rs.rows[0][0] > 0:
+            return  # Sudah dimigrasi
+    except Exception:
+        return  # Tabel belum ada, skip
+    
+    print("🔄 Migrasi timestamp UTC → WIB (UTC+7)...")
+    
+    try:
+        # Migrasi tabel users
+        _execute("""
+            UPDATE users 
+            SET created_at = DATETIME(created_at, '+7 hours'),
+                updated_at = DATETIME(updated_at, '+7 hours')
+            WHERE created_at IS NOT NULL
+        """)
+        
+        # Migrasi tabel query_logs
+        _execute("""
+            UPDATE query_logs 
+            SET created_at = DATETIME(created_at, '+7 hours')
+            WHERE created_at IS NOT NULL
+        """)
+        
+        # Migrasi tabel documents
+        _execute("""
+            UPDATE documents 
+            SET created_at = DATETIME(created_at, '+7 hours'),
+                updated_at = DATETIME(updated_at, '+7 hours')
+            WHERE created_at IS NOT NULL
+        """)
+        
+        # Tandai migrasi sudah selesai
+        _execute(
+            "INSERT INTO _migrations (name, applied_at) VALUES (?, ?)",
+            [MIGRATION_NAME, now_wib_str()]
+        )
+        
+        print("✅ Migrasi timestamp selesai — semua data dikonversi ke WIB")
+    except Exception as e:
+        print(f"⚠️ Migrasi timestamp gagal: {e}")
+
+
 def init_db():
     """Initialize database tables and create default admin if none exists."""
+
+    # Buat tabel metadata migrasi (jika belum ada)
+    _execute("""
+        CREATE TABLE IF NOT EXISTS _migrations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            applied_at TEXT NOT NULL
+        )
+    """)
+
     _execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             salt TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT,
+            updated_at TEXT
         )
     """)
     
@@ -66,7 +129,7 @@ def init_db():
             top_source TEXT,
             response_time REAL,
             resolved INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT
         )
     """)
 
@@ -75,8 +138,8 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             filename TEXT UNIQUE NOT NULL,
             content TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT,
+            updated_at TEXT
         )
     """)
 
@@ -91,6 +154,9 @@ def init_db():
         except Exception:
             pass  # Column already exists, ignore
     
+    # Migrasi timestamp lama (UTC) ke WIB
+    _migrate_timestamps_to_wib()
+
     # Create default admin if no users exist
     rs = _execute("SELECT COUNT(*) FROM users")
     count = rs.rows[0][0]
@@ -114,9 +180,10 @@ def create_user(username: str, password: str) -> bool:
     """Create a new user account."""
     try:
         password_hash, salt = _hash_password(password)
+        wib_now = now_wib_str()
         _execute(
-            "INSERT INTO users (username, password_hash, salt) VALUES (?, ?, ?)",
-            [username, password_hash, salt]
+            "INSERT INTO users (username, password_hash, salt, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            [username, password_hash, salt, wib_now, wib_now]
         )
         return True
     except Exception as e:
@@ -150,8 +217,8 @@ def change_password(username: str, new_password: str) -> dict:
     
     password_hash, salt = _hash_password(new_password)
     _execute(
-        "UPDATE users SET password_hash = ?, salt = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?",
-        [password_hash, salt, username]
+        "UPDATE users SET password_hash = ?, salt = ?, updated_at = ? WHERE username = ?",
+        [password_hash, salt, now_wib_str(), username]
     )
     
     return {"success": True, "message": "Password berhasil diubah"}
@@ -167,9 +234,9 @@ def log_query(query: str, response: str = None, status: str = "success",
     """Log a chatbot query and response to the database."""
     try:
         _execute(
-            """INSERT INTO query_logs (query, response, status, error_message, retrieval_count, top_source, response_time)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            [query, response, status, error_message, retrieval_count, top_source, response_time]
+            """INSERT INTO query_logs (query, response, status, error_message, retrieval_count, top_source, response_time, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            [query, response, status, error_message, retrieval_count, top_source, response_time, now_wib_str()]
         )
     except Exception as e:
         print(f"⚠️ Failed to log query: {e}")
@@ -240,20 +307,23 @@ def clear_query_logs() -> dict:
 
 
 def get_daily_stats(days: int = 7) -> dict:
-    """Get query count per day for the last N days."""
+    """Get query count per day for the last N days (WIB)."""
+    from datetime import timedelta
+    today_wib = date_today_wib()
+    start_date = (today_wib - timedelta(days=days - 1)).isoformat()
+    
     rs = _execute("""
         SELECT DATE(created_at) as day, COUNT(*) as count
         FROM query_logs
-        WHERE created_at >= DATE('now', ? || ' days')
+        WHERE DATE(created_at) >= ?
         GROUP BY DATE(created_at)
         ORDER BY day ASC
-    """, [f"-{days}"])
+    """, [start_date])
 
     # Build a complete 7-day series (fill missing days with 0)
-    from datetime import date, timedelta
     result = {}
     for i in range(days):
-        d = (date.today() - timedelta(days=days - 1 - i)).isoformat()
+        d = (today_wib - timedelta(days=days - 1 - i)).isoformat()
         result[d] = 0
     for row in rs.rows:
         day_key = row[0]
@@ -289,14 +359,15 @@ def get_topic_stats() -> dict:
 def save_document(filename: str, content: str):
     """Save or update a document in Turso."""
     try:
+        wib_now = now_wib_str()
         rs = _execute(
-            "UPDATE documents SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE filename = ?",
-            [content, filename]
+            "UPDATE documents SET content = ?, updated_at = ? WHERE filename = ?",
+            [content, wib_now, filename]
         )
         if rs.rows_affected == 0:
             _execute(
-                "INSERT INTO documents (filename, content) VALUES (?, ?)",
-                [filename, content]
+                "INSERT INTO documents (filename, content, created_at, updated_at) VALUES (?, ?, ?, ?)",
+                [filename, content, wib_now, wib_now]
             )
     except Exception as e:
         print(f"⚠️ Failed to save document: {e}")

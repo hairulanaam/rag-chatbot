@@ -1,13 +1,13 @@
 import re
 from typing import List, Dict
-from datetime import datetime
+from src.timezone_utils import now_wib_str
 
 
 class DocumentChunker: 
     # Initialize the DocumentChunker with default max tokens
     def __init__(self, max_tokens: int = 1840):
         self.metadata = {
-            "last_processed": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "last_processed": now_wib_str(),
         }
         self.max_tokens = max_tokens
         self.approx_chars_per_token = 4
