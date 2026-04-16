@@ -73,6 +73,28 @@ class AudioHandler:
         
         return text
     
+    # Transcribe audio chunks for interim streaming results (quick partial transcription)
+    def transcribe_chunks(self, audio_chunks: list, sample_rate: int = 16000) -> str:
+        """Transcribe accumulated audio chunks for interim/streaming display.
+        Returns transcribed text or empty string on failure."""
+        if not audio_chunks:
+            return ""
+        
+        try:
+            # Convert chunks to WAV
+            wav_bytes, duration = self.chunks_to_wav(audio_chunks, sample_rate)
+            
+            # Skip if too short (< 0.5s won't produce useful results)
+            if duration < 0.5:
+                return ""
+            
+            # Transcribe using Groq (fast — typically < 0.5s)
+            text = self.transcribe(wav_bytes)
+            return text if text else ""
+        except Exception as e:
+            print(f"⚠️ Interim transcription error: {e}")
+            return ""
+    
     # Convert audio chunks to WAV format
     def chunks_to_wav(self, audio_chunks: list, sample_rate: int = 16000) -> tuple[bytes, float]:
         if not audio_chunks:

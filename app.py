@@ -1,9 +1,10 @@
 import chainlit as cl
 import numpy as np
 import time
+import asyncio
 from src.rag_chain import PineconeRetriever, GroqLLM, format_docs, RateLimitError
 from src.database import log_query
-from src.audio_handler import AudioHandler, MIN_AUDIO_DURATION
+from src.audio_handler import AudioHandler, MIN_AUDIO_DURATION, MIN_AUDIO_ENERGY
 from src.config import FALLBACK_PHRASES
 
 # Configuration
@@ -66,17 +67,58 @@ async def on_suggestion(action: cl.Action):
 
 
 # Audio Handling
+# Configuration for streaming transcription
+STREAMING_TRANSCRIBE_INTERVAL = 2.0  # seconds between interim transcriptions
+
 @cl.on_audio_start
 async def on_audio_start():
-    """Initialize audio recording session"""
+    """Initialize audio recording session with streaming transcription support"""
     cl.user_session.set("audio_chunks", [])
-    print("🎤 Audio recording started")
+    
+    # Streaming transcription state
+    cl.user_session.set("last_transcribe_time", time.time())
+    cl.user_session.set("interim_text", "")
+    cl.user_session.set("is_transcribing", False)
+    
+    # Create streaming message that will show interim transcription
+    streaming_msg = cl.Message(content='Mendengarkan...')
+    await streaming_msg.send()
+    cl.user_session.set("streaming_msg", streaming_msg)
+    
     return True
+
+
+async def _do_interim_transcription():
+    """Perform interim transcription of accumulated audio chunks."""
+    audio_chunks = cl.user_session.get("audio_chunks")
+    audio_handler = cl.user_session.get("audio_handler")
+    streaming_msg = cl.user_session.get("streaming_msg")
+    
+    if not audio_chunks or not audio_handler or not streaming_msg:
+        return
+    
+    # Copy current chunks to avoid race conditions
+    chunks_copy = list(audio_chunks)
+    
+    try:
+        # Transcribe accumulated audio (runs fast on Groq)
+        text = await cl.make_async(audio_handler.transcribe_chunks)(chunks_copy)
+        
+        if text:
+            cl.user_session.set("interim_text", text)
+            # Update the streaming message with interim transcription
+            streaming_msg.content = f'*Mendengarkan...\n\n> {text}'
+            await streaming_msg.update()
+            print(f"📝 Interim transcription: {text}")
+    except Exception as e:
+        print(f"⚠️ Interim transcription error: {e}")
+    finally:
+        cl.user_session.set("is_transcribing", False)
 
 
 @cl.on_audio_chunk
 async def on_audio_chunk(chunk: cl.InputAudioChunk):
-    """Collect incoming audio chunks (user stops recording manually)"""
+    """Collect incoming audio chunks and perform periodic interim transcription"""
     audio_chunks = cl.user_session.get("audio_chunks")
     
     # Convert chunk data to numpy array and store
@@ -84,73 +126,111 @@ async def on_audio_chunk(chunk: cl.InputAudioChunk):
     
     if audio_chunks is not None:
         audio_chunks.append(audio_chunk)
+    
+    # --- Streaming transcription: periodically transcribe accumulated audio ---
+    last_time = cl.user_session.get("last_transcribe_time", 0)
+    is_transcribing = cl.user_session.get("is_transcribing", False)
+    now = time.time()
+    
+    if (now - last_time) >= STREAMING_TRANSCRIBE_INTERVAL and not is_transcribing:
+        cl.user_session.set("last_transcribe_time", now)
+        cl.user_session.set("is_transcribing", True)
+        # Fire-and-forget: don't block chunk collection
+        asyncio.create_task(_do_interim_transcription())
 
 
 # Shared audio processing function (used by both silence auto-end and manual stop)
 async def process_audio_input():
-    """Process recorded audio - transcribe and send to RAG pipeline"""
+    """Process recorded audio - final transcription and auto-send to RAG pipeline"""
     audio_chunks = cl.user_session.get("audio_chunks")
     audio_handler = cl.user_session.get("audio_handler")
+    streaming_msg = cl.user_session.get("streaming_msg")
     
     if not audio_chunks or not audio_handler:
+        # Remove streaming message if present
+        if streaming_msg:
+            await streaming_msg.remove()
         await cl.Message(content="⚠️ Tidak ada audio yang terekam.").send()
         return
     
+    # Update streaming message to show finalizing status
+    if streaming_msg:
+        interim_text = cl.user_session.get("interim_text", "")
+        if interim_text:
+            streaming_msg.content = f'<span class="loading-text"><span class="loading-spinner"></span>Memfinalisasi transkripsi<span class="loading-dots"></span></span>\n\n> {interim_text}'
+        else:
+            streaming_msg.content = '<span class="loading-text"><span class="loading-spinner"></span>Mentranskrip audio<span class="loading-dots"></span></span>'
+        await streaming_msg.update()
+    
     # Check if audio has enough energy to be speech (reject silence/noise early)
-    if not audio_handler.has_speech_energy(audio_chunks):
-        await cl.Message(
-            content="⚠️ Tidak terdeteksi suara. Silakan bicara lebih keras dan coba lagi."
-        ).send()
+    has_energy = audio_handler.has_speech_energy(audio_chunks)
+    
+    if not has_energy:
+        if streaming_msg:
+            streaming_msg.content = "⚠️ Tidak terdeteksi suara. Silakan bicara lebih keras dan coba lagi."
+            await streaming_msg.update()
+        else:
+            await cl.Message(
+                content="⚠️ Tidak terdeteksi suara. Silakan bicara lebih keras dan coba lagi."
+            ).send()
         return
     
     # Convert chunks to WAV
     audio_buffer, duration = audio_handler.chunks_to_wav(audio_chunks)
     
     # Check minimum duration
-    if duration < MIN_AUDIO_DURATION:
-        await cl.Message(
-            content=f"⚠️ Audio terlalu pendek ({duration:.1f}s). Silakan bicara lebih lama."
-        ).send()
+    duration_passed = duration >= MIN_AUDIO_DURATION
+    
+    if not duration_passed:
+        if streaming_msg:
+            streaming_msg.content = f"⚠️ Audio terlalu pendek ({duration:.1f}s). Silakan bicara lebih lama."
+            await streaming_msg.update()
+        else:
+            await cl.Message(
+                content=f"⚠️ Audio terlalu pendek ({duration:.1f}s). Silakan bicara lebih lama."
+            ).send()
         return
     
     print(f"🎤 Audio recorded: {duration:.1f}s")
     
     try:
-        # First show transcribing status (this will be replaced)
-        status_msg = cl.Message(content='<span class="loading-text"><span class="loading-spinner"></span>Mentranskrip audio<span class="loading-dots"></span></span>')
-        await status_msg.send()
-        
-        # Transcribe audio to text
+        # Final transcription on full audio for best accuracy
         transcription = await cl.make_async(audio_handler.transcribe)(audio_buffer)
         
         if not transcription:
-            status_msg.content = "Tidak terdeteksi pertanyaan. Silakan bicara dengan jelas dan coba lagi."
-            await status_msg.update()
+            if streaming_msg:
+                streaming_msg.content = "Tidak terdeteksi pertanyaan. Silakan bicara dengan jelas dan coba lagi."
+                await streaming_msg.update()
             return
         
-        print(f"📝 Transcription: {transcription}")
+        print(f"📝 Final Transcription: {transcription}")
         
-        # Remove the status message by clearing it
-        await status_msg.remove()
+        # Remove the streaming message
+        if streaming_msg:
+            await streaming_msg.remove()
         
-        # Show user's transcribed message FIRST
+        # Show user's transcribed message
         await cl.Message(
             author="You",
             type="user_message",
             content=transcription,
         ).send()
         
-        # Create NEW response message for RAG output
+        # Create NEW response message for RAG output and auto-send
         response_msg = cl.Message(content='<span class="loading-text"><span class="loading-spinner"></span>Mencari dokumen<span class="loading-dots"></span></span>')
         await response_msg.send()
         
-        # Now process through RAG pipeline
+        # Auto-send to RAG pipeline
         await process_question(transcription, response_msg)
         
     except Exception as e:
         print(f"Error transcribing audio: {str(e)}")
-        error_msg = cl.Message(content="⚠️ Terjadi kesalahan saat memproses audio. Silakan coba lagi.")
-        await error_msg.send()
+        if streaming_msg:
+            streaming_msg.content = "⚠️ Terjadi kesalahan saat memproses audio. Silakan coba lagi."
+            await streaming_msg.update()
+        else:
+            error_msg = cl.Message(content="⚠️ Terjadi kesalahan saat memproses audio. Silakan coba lagi.")
+            await error_msg.send()
 
 
 @cl.on_audio_end
@@ -185,6 +265,8 @@ async def process_question(user_question: str, msg: cl.Message = None):
     try:
         # Retrieve documents
         docs = await cl.make_async(retriever.invoke)(user_question)
+        
+
         
         # Check if we have results
         if not docs:
