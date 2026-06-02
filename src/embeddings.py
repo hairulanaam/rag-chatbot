@@ -14,7 +14,6 @@ class Embeddings:
         self.embedding_dim = output_dimensionality
         self.output_dimensionality = output_dimensionality
         
-        # Warm-up & validasi koneksi
         try:
             test_result = self.client.models.embed_content(
                 model=self.model_name,
@@ -31,7 +30,6 @@ class Embeddings:
             raise ConnectionError(f"❌ Gagal connect ke Google Embedding API: {e}")
     
     def _embed_with_retry(self, contents, task_type: str, max_retries: int = 3):
-        """Helper: embed dengan retry dan exponential backoff."""
         for attempt in range(max_retries):
             try:
                 return self.client.models.embed_content(
@@ -51,11 +49,7 @@ class Embeddings:
                     raise
     
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        """
-        Embed dokumen untuk indexing ke Pinecone.
-        task_type=RETRIEVAL_DOCUMENT — dioptimasi agar dokumen mudah ditemukan.
-        """
-        batch_size = 100  # Batas Google API per request
+        batch_size = 100 
         all_embeddings = []
         
         for i in range(0, len(texts), batch_size):
@@ -73,15 +67,6 @@ class Embeddings:
         return all_embeddings
     
     def embed_query(self, text: str) -> List[float]:
-        """
-        Embed query user untuk pencarian di Pinecone.
-        task_type=RETRIEVAL_QUERY — dioptimasi untuk menemukan dokumen relevan.
-        
-        Dipilih daripada QUESTION_ANSWERING karena:
-        - User chatbot tidak selalu mengirim proper question
-        - Bisa berupa keyword, frasa, atau perintah
-        - RETRIEVAL_QUERY menangani semua jenis input dengan baik
-        """
         try:
             result = self._embed_with_retry(text, task_type="RETRIEVAL_QUERY")
             return list(result.embeddings[0].values)
@@ -91,7 +76,6 @@ class Embeddings:
 
 
 def get_embeddings() -> Embeddings:
-    """Factory function untuk membuat instance Embeddings"""
     return Embeddings(
         model_name=EMBEDDING_MODEL_NAME,
         output_dimensionality=EMBEDDING_DIMENSION

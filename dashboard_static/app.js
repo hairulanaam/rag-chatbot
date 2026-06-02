@@ -1,12 +1,3 @@
-/**
- * Dashboard Admin - Frontend Logic
- * Handles all client-side interactions for the chatbot management dashboard.
- */
-
-// ============================================================
-// API Helper
-// ============================================================
-
 const API_BASE = '/dashboard';
 
 async function api(endpoint, options = {}) {
@@ -172,27 +163,22 @@ function navigateTo(page) {
         return;
     }
 
-    // Update nav items
     document.querySelectorAll('.nav-item[data-page]').forEach(el => {
         el.classList.toggle('active', el.dataset.page === page);
     });
 
-    // Show/hide pages
     document.querySelectorAll('.page').forEach(el => {
         el.classList.remove('active');
     });
     const pageEl = document.getElementById(`page-${page}`);
     if (pageEl) pageEl.classList.add('active');
 
-    // Load data for specific pages
     if (page === 'documents') loadDocuments();
     if (page === 'logs') { loadLogs(); loadLogStats(); loadDailyStats(); }
 
-    // Track current page and restart auto-refresh for this page
     currentPage = page;
     startAutoRefresh();
 
-    // Close mobile sidebar
     closeSidebar();
 }
 
@@ -209,12 +195,11 @@ function closeSidebar() {
 }
 
 // ============================================================
-// Documents
+// Documents Menu
 // ============================================================
 
 async function loadDocuments() {
     try {
-        // Fetch document list and indexed status in parallel
         const [data, indexedData] = await Promise.all([
             api('/api/documents'),
             api('/api/documents/indexed').catch(() => ({ indexed: {} }))
@@ -222,7 +207,6 @@ async function loadDocuments() {
         const docs = data.documents || [];
         const indexed = indexedData.indexed || {};
 
-        // Update stats
         const statsEl = document.getElementById('docStats');
         const totalSize = docs.reduce((sum, d) => sum + d.size_bytes, 0);
         statsEl.innerHTML = `
@@ -238,7 +222,6 @@ async function loadDocuments() {
             </div>
         `;
 
-        // Update table
         const tbody = document.getElementById('documentsTable');
         if (docs.length === 0) {
             tbody.innerHTML = `
@@ -452,7 +435,6 @@ async function createDocument(andIndex = false) {
 const uploadZone = document.getElementById('uploadZone');
 const fileInput = document.getElementById('fileInput');
 
-// Drag events
 uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
 uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
 uploadZone.addEventListener('drop', (e) => {
@@ -468,7 +450,6 @@ fileInput.addEventListener('change', () => {
 const SUPPORTED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.docx', '.doc', '.txt'];
 
 async function uploadFile(file) {
-    // Validasi format file sebelum upload
     const fileName = file.name.toLowerCase();
     const fileExt = '.' + fileName.split('.').pop();
     if (!SUPPORTED_EXTENSIONS.includes(fileExt)) {
@@ -498,7 +479,6 @@ async function uploadFile(file) {
 
         showToast(result.message, 'success');
 
-        // Reset input & close create section
         fileInput.value = '';
         document.getElementById('createSection').style.display = 'none';
         loadDocuments();
@@ -510,7 +490,7 @@ async function uploadFile(file) {
 }
 
 // ============================================================
-// Create Section Toggle & Tabs
+// Create Tab
 // ============================================================
 
 function toggleCreateSection() {
@@ -595,7 +575,6 @@ async function loadLogs() {
             `;
         }).join('');
 
-        // Pagination
         const pag = document.getElementById('logsPagination');
         const totalPages = Math.ceil(total / LOGS_PER_PAGE);
         const currentPage = Math.floor(logsCurrentOffset / LOGS_PER_PAGE) + 1;
@@ -620,7 +599,6 @@ async function loadLogs() {
 
 async function loadLogStats() {
     try {
-        // -- Topic Pie Chart --
         const topicData = await api('/api/logs/topics');
         const topics = topicData.topics || [];
         const pieEl = document.getElementById('topicPieContainer');
@@ -630,7 +608,6 @@ async function loadLogStats() {
             pieEl.innerHTML = renderTopicPie(topics);
         }
 
-        // -- Success Rate Bars --
         const statsData = await api('/api/logs/stats');
         const stats = statsData.stats || {};
         const total = statsData.total || 0;
@@ -731,7 +708,6 @@ async function loadDailyStats() {
         const counts = dailyData.counts || [];
         const allTimeTotal = statsData.total || 0;
 
-        // Show all-time total (not just 7-day)
         document.getElementById('engagementTotal').textContent = allTimeTotal;
 
         const el = document.getElementById('lineChartContainer');
@@ -752,13 +728,11 @@ function renderLineChart(days, counts) {
     const maxVal = Math.max(...counts, 1);
     const n = days.length;
 
-    // Points
     const pts = counts.map((v, i) => ({
         x: padL + (i / (n - 1)) * iW,
         y: padT + iH - (v / maxVal) * iH
     }));
 
-    // Smooth path (catmull-rom approx)
     function smooth(pts) {
         if (pts.length < 2) return `M${pts[0].x},${pts[0].y}`;
         let d = `M${pts[0].x},${pts[0].y}`;
@@ -774,7 +748,6 @@ function renderLineChart(days, counts) {
     const linePath = smooth(pts);
     const areaPath = linePath + ` L${pts[n - 1].x},${padT + iH} L${pts[0].x},${padT + iH} Z`;
 
-    // Day labels (short: e.g. "28/2")
     const labels = days.map(d => {
         const parts = d.split('-');
         return `${parseInt(parts[2])}/${parseInt(parts[1])}`;
@@ -789,7 +762,6 @@ function renderLineChart(days, counts) {
     const xLabels = labels.map((l, i) => `
         <text x="${pts[i].x}" y="${H - 4}" text-anchor="middle" fill="#64748b" font-size="9">${l}</text>`).join('');
 
-    // Y gridlines
     const gridLines = [0, 0.5, 1].map(f => {
         const y = padT + iH - f * iH;
         const val = Math.round(f * maxVal);
@@ -813,7 +785,7 @@ function renderLineChart(days, counts) {
 }
 
 // ============================================================
-// Change Password
+// Change Password Menu
 // ============================================================
 
 document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
@@ -846,25 +818,23 @@ document.getElementById('changePasswordForm').addEventListener('submit', async (
 });
 
 // ============================================================
-// Knowledge Modal (Tambah Knowledge dari Pertanyaan Tidak Terjawab)
+// Add Knowledge Modal
 // ============================================================
 
-let knowledgeDocContents = {}; // Cache konten dokumen yang sudah di-fetch
-let currentKnowledgeLogId = null; // Track log ID being resolved
+let knowledgeDocContents = {};
+let currentKnowledgeLogId = null;
 
 async function openKnowledgeModal(logId, question) {
     currentKnowledgeLogId = logId;
     const modal = document.getElementById('knowledgeModal');
     document.getElementById('knowledgeQuestion').textContent = question;
 
-    // Reset form
     document.getElementById('knowledgeNewDocToggle').checked = false;
     document.getElementById('knowledgeSectionTitle').value = '';
     document.getElementById('knowledgeContent').value = '';
     document.getElementById('knowledgeNewDocName').value = '';
     toggleKnowledgeDocMode();
 
-    // Load document list
     const select = document.getElementById('knowledgeDocTarget');
     select.innerHTML = '<option value="">Memuat dokumen...</option>';
 
@@ -895,7 +865,6 @@ function toggleKnowledgeDocMode() {
 }
 
 async function onKnowledgeDocSelect() {
-    // Pre-fetch document content when selected (for append later)
     const filename = document.getElementById('knowledgeDocTarget').value;
     if (filename && !knowledgeDocContents[filename]) {
         try {
@@ -921,14 +890,12 @@ async function submitKnowledge(andIndex = false) {
         return;
     }
 
-    // Build new section markdown
     const newSection = `\n\n## ${sectionTitle}\n\n${content}`;
 
     try {
         let targetFilename;
 
         if (isNewDoc) {
-            // === Create new document ===
             const newDocName = document.getElementById('knowledgeNewDocName').value.trim();
             if (!newDocName) {
                 showToast('Nama dokumen baru tidak boleh kosong', 'warning');
@@ -945,7 +912,6 @@ async function submitKnowledge(andIndex = false) {
                 body: JSON.stringify({ filename: newDocName, content: fullContent }),
             });
         } else {
-            // === Append to existing document ===
             targetFilename = document.getElementById('knowledgeDocTarget').value;
             if (!targetFilename) {
                 showToast('Pilih dokumen tujuan terlebih dahulu', 'warning');
@@ -954,14 +920,12 @@ async function submitKnowledge(andIndex = false) {
 
             showLoading('Memperbarui dokumen...');
 
-            // Get current content (from cache or fetch)
             let currentContent = knowledgeDocContents[targetFilename];
             if (!currentContent) {
                 const data = await api(`/api/documents/${targetFilename}`);
                 currentContent = data.content;
             }
 
-            // Append new section
             const updatedContent = currentContent + newSection;
 
             await api(`/api/documents/${targetFilename}`, {
@@ -970,7 +934,6 @@ async function submitKnowledge(andIndex = false) {
             });
         }
 
-        // Optionally re-index
         if (andIndex) {
             showLoading('Mengunggah dokumen...');
             const result = await api(`/api/documents/${targetFilename}/index`, { method: 'POST' });
@@ -980,7 +943,6 @@ async function submitKnowledge(andIndex = false) {
         }
 
         closeKnowledgeModal();
-        // Mark this log as resolved via server API and refresh table
         if (currentKnowledgeLogId) {
             try {
                 await api(`/api/logs/${currentKnowledgeLogId}/resolve`, { method: 'PATCH' });
@@ -1011,28 +973,20 @@ function formatSize(bytes) {
 // Auto-Refresh System
 // ============================================================
 
-const AUTO_REFRESH_INTERVAL = 15000; // 15 seconds
+const AUTO_REFRESH_INTERVAL = 15000; 
 let autoRefreshTimer = null;
-let currentPage = 'logs'; // track current active page
+let currentPage = 'logs';
 
-/**
- * Start auto-refresh polling for the current page.
- * Only the active page is polled. Timer is cleared and re-created on page change.
- */
 function startAutoRefresh() {
     stopAutoRefresh();
 
     autoRefreshTimer = setInterval(() => {
-        // Only refresh if the tab is visible
         if (document.hidden) return;
 
         silentRefresh();
     }, AUTO_REFRESH_INTERVAL);
 }
 
-/**
- * Stop auto-refresh polling.
- */
 function stopAutoRefresh() {
     if (autoRefreshTimer) {
         clearInterval(autoRefreshTimer);
@@ -1040,10 +994,6 @@ function stopAutoRefresh() {
     }
 }
 
-/**
- * Silently refresh data for the current active page.
- * Does NOT show errors as toasts (to avoid spamming on network issues).
- */
 async function silentRefresh() {
     try {
         if (currentPage === 'logs') {
@@ -1056,25 +1006,18 @@ async function silentRefresh() {
             await loadDocuments();
         }
     } catch (err) {
-        // Silent fail — don't show toast for auto-refresh errors
         console.warn('Auto-refresh failed:', err.message);
     }
 }
 
-// Pause auto-refresh when tab is hidden, resume when visible
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         stopAutoRefresh();
     } else {
-        // Resume: immediately refresh and restart polling
         silentRefresh();
         startAutoRefresh();
     }
 });
-
-// ============================================================
-// Init
-// ============================================================
 
 checkAuth();
 

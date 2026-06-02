@@ -11,13 +11,8 @@
 </head>
 
 <body>
-
-    <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- ============================================================ -->
-    <!-- LOGIN PAGE -->
-    <!-- ============================================================ -->
     <div class="login-container" id="loginPage">
         <div class="login-card">
             <img src="https://i.ibb.co.com/LdXJ6TR4/logo.png" alt="Logo Sekolah" class="login-logo">
@@ -42,14 +37,10 @@
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- DASHBOARD -->
-    <!-- ============================================================ -->
     <button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
 
     <div class="dashboard" id="dashboard">
-        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <img src="https://i.ibb.co.com/LdXJ6TR4/logo.png" alt="Logo Sekolah" class="sidebar-logo">
@@ -81,16 +72,13 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
+        <!-- ===== STATISTICS PAGE ===== -->
         <main class="main-content">
-
-            <!-- ===== STATISTIK CHATBOT PAGE (DEFAULT) ===== -->
             <div class="page active" id="page-logs">
                 <div class="page-header">
                     <h1>Statistik Chatbot</h1>
                 </div>
 
-                <!-- Section 1: User Engagement -->
                 <div class="card stat-section" id="engagementCard">
                     <div class="card-header">
                         <h3>Interaksi Pengguna</h3>
@@ -110,7 +98,6 @@
                     </div>
                 </div>
 
-                <!-- Section 2: Content Analytics -->
                 <div class="analytics-row">
                     <div class="card analytics-card">
                         <h3>Top Topik</h3>
@@ -126,7 +113,6 @@
                     </div>
                 </div>
 
-                <!-- Section 3: Riwayat Interaksi -->
                 <div class="card">
                     <div class="card-header">
                         <h3>Riwayat Interaksi</h3>
@@ -167,7 +153,6 @@
 
                 <div class="stats-grid" id="docStats"></div>
 
-                <!-- Create/Upload Section (collapsible) -->
                 <div class="card" id="createSection" style="display: none;">
                     <div class="card-header">
                         <div class="create-tabs">
@@ -182,7 +167,6 @@
                             Tutup</button>
                     </div>
 
-                    <!-- Upload Tab -->
                     <div class="create-tab-content active" id="tab-upload">
                         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
                             <div class="upload-icon"><i data-lucide="folder-open"></i></div>
@@ -192,7 +176,6 @@
                         <input type="file" id="fileInput" style="display: none;">
                     </div>
 
-                    <!-- Manual Create Tab -->
                     <div class="create-tab-content" id="tab-manual">
                         <div class="form-group">
                             <label for="newDocName">Nama File</label>
@@ -214,7 +197,6 @@
                     </div>
                 </div>
 
-                <!-- Documents Table -->
                 <div class="card">
                     <div class="card-header">
                         <h3>Daftar Dokumen</h3>
@@ -247,7 +229,6 @@
                 </div>
             </div>
 
-            <!-- ===== EDIT DOCUMENT PAGE ===== -->
             <div class="page" id="page-edit">
                 <div class="page-header">
                     <h1>Edit Dokumen</h1>
@@ -297,7 +278,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- MODAL: TAMBAH KNOWLEDGE DARI PERTANYAAN TIDAK TERJAWAB -->
+    <!-- Add Knowledge Modal -->
     <!-- ============================================================ -->
     <div class="modal-overlay" id="knowledgeModal" style="display:none">
         <div class="modal knowledge-modal">
@@ -345,10 +326,7 @@
             </div>
         </div>
     </div>
-
-    <!-- ============================================================ -->
-    <!-- LOADING OVERLAY -->
-    <!-- ============================================================ -->
+    
     <div class="loading-overlay" id="loadingOverlay" style="display: none;">
         <div class="loading-box">
             <div class="spinner" style="border-top-color: var(--accent);"></div>

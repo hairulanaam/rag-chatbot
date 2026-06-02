@@ -1,7 +1,3 @@
-"""
-Database module for dashboard authentication and query logging.
-Uses Turso (libSQL) cloud database to store admin credentials with hashing and chatbot query logs.
-"""
 import libsql_client
 import hashlib
 import secrets
@@ -9,15 +5,12 @@ import os
 from src.timezone_utils import now_wib_str, date_today_wib
 from src.config import TURSO_DATABASE_URL, TURSO_AUTH_TOKEN
 
-# Create a persistent sync client
 _client = None
 
 
 def _get_client():
-    """Get or create the libsql sync client."""
     global _client
     if _client is None:
-        # Convert libsql:// to https:// for HTTP transport
         url = TURSO_DATABASE_URL
         if url.startswith("libsql://"):
             url = url.replace("libsql://", "https://", 1)
@@ -29,7 +22,6 @@ def _get_client():
 
 
 def _execute(sql: str, args=None):
-    """Execute a SQL statement and return the ResultSet."""
     client = _get_client()
     if args:
         return client.execute(sql, args)
@@ -37,31 +29,25 @@ def _execute(sql: str, args=None):
 
 
 def _rows_to_dicts(result_set) -> list:
-    """Convert ResultSet rows to list of dicts using column names."""
     if not result_set.rows or not result_set.columns:
         return []
     return [dict(zip(result_set.columns, row)) for row in result_set.rows]
 
 
 def _migrate_timestamps_to_wib():
-    """Migrasi one-time: konversi timestamp UTC ke WIB (+7 jam) untuk data yang sudah ada."""
     MIGRATION_NAME = "timestamps_utc_to_wib"
     
-    # Cek apakah migrasi sudah pernah dijalankan
     try:
         rs = _execute(
             "SELECT COUNT(*) FROM _migrations WHERE name = ?",
             [MIGRATION_NAME]
         )
         if rs.rows[0][0] > 0:
-            return  # Sudah dimigrasi
+            return 
     except Exception:
-        return  # Tabel belum ada, skip
-    
-    print("🔄 Migrasi timestamp UTC → WIB (UTC+7)...")
+        return 
     
     try:
-        # Migrasi tabel users
         _execute("""
             UPDATE users 
             SET created_at = DATETIME(created_at, '+7 hours'),
@@ -69,14 +55,12 @@ def _migrate_timestamps_to_wib():
             WHERE created_at IS NOT NULL
         """)
         
-        # Migrasi tabel query_logs
         _execute("""
             UPDATE query_logs 
             SET created_at = DATETIME(created_at, '+7 hours')
             WHERE created_at IS NOT NULL
         """)
         
-        # Migrasi tabel documents
         _execute("""
             UPDATE documents 
             SET created_at = DATETIME(created_at, '+7 hours'),
@@ -84,21 +68,16 @@ def _migrate_timestamps_to_wib():
             WHERE created_at IS NOT NULL
         """)
         
-        # Tandai migrasi sudah selesai
         _execute(
             "INSERT INTO _migrations (name, applied_at) VALUES (?, ?)",
             [MIGRATION_NAME, now_wib_str()]
         )
-        
-        print("✅ Migrasi timestamp selesai — semua data dikonversi ke WIB")
     except Exception as e:
         print(f"⚠️ Migrasi timestamp gagal: {e}")
 
 
 def init_db():
-    """Initialize database tables and create default admin if none exists."""
 
-    # Buat tabel metadata migrasi (jika belum ada)
     _execute("""
         CREATE TABLE IF NOT EXISTS _migrations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -143,7 +122,6 @@ def init_db():
         )
     """)
 
-    # Safe migration: add columns if they don't exist yet
     for col_sql in [
         "ALTER TABLE query_logs ADD COLUMN top_source TEXT",
         "ALTER TABLE query_logs ADD COLUMN response_time REAL",
@@ -152,23 +130,18 @@ def init_db():
         try:
             _execute(col_sql)
         except Exception:
-            pass  # Column already exists, ignore
-    
-    # Migrasi timestamp lama (UTC) ke WIB
+            pass 
+
     _migrate_timestamps_to_wib()
 
-    # Create default admin if no users exist
     rs = _execute("SELECT COUNT(*) FROM users")
     count = rs.rows[0][0]
     
     if count == 0:
         create_user("admin", "admin123")
-        print("📝 Default admin account created (username: admin, password: admin123)")
-        print("⚠️  Please change the default password after first login!")
 
 
 def _hash_password(password: str, salt: str = None) -> tuple:
-    """Hash password with salt using SHA-256."""
     if salt is None:
         salt = secrets.token_hex(16)
     
@@ -177,7 +150,6 @@ def _hash_password(password: str, salt: str = None) -> tuple:
 
 
 def create_user(username: str, password: str) -> bool:
-    """Create a new user account."""
     try:
         password_hash, salt = _hash_password(password)
         wib_now = now_wib_str()
@@ -244,18 +216,15 @@ def log_query(query: str, response: str = None, status: str = "success",
 
 def get_query_logs(limit: int = 50, offset: int = 0) -> dict:
     """Get query logs with pagination."""
-    # Get total count
     rs_count = _execute("SELECT COUNT(*) FROM query_logs")
     total = rs_count.rows[0][0]
-    
-    # Get logs (newest first)
+
     rs = _execute(
         "SELECT * FROM query_logs ORDER BY created_at DESC LIMIT ? OFFSET ?",
         [limit, offset]
     )
     
     logs = _rows_to_dicts(rs)
-    # Ensure 'resolved' key exists with default value
     for log in logs:
         if "resolved" not in log:
             log["resolved"] = 0
@@ -278,7 +247,6 @@ def get_query_stats() -> dict:
     for row in rs.rows:
         stats[row[0]] = row[1]
 
-    # Average response time (all queries)
     rs_avg = _execute("""
         SELECT ROUND(AVG(response_time), 2) as avg_rt
         FROM query_logs
@@ -320,7 +288,6 @@ def get_daily_stats(days: int = 7) -> dict:
         ORDER BY day ASC
     """, [start_date])
 
-    # Build a complete 7-day series (fill missing days with 0)
     result = {}
     for i in range(days):
         d = (today_wib - timedelta(days=days - 1 - i)).isoformat()
@@ -353,7 +320,7 @@ def get_topic_stats() -> dict:
 
 
 # ============================================================
-# Document Storage (Turso as single source of truth)
+# Document Storage
 # ============================================================
 
 def save_document(filename: str, content: str):

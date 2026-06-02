@@ -1,5 +1,3 @@
-/* Custom CSS for SD Integral Chatbot */
-
 /* Starter buttons - white/light style */
 .cl-starter-button {
     background-color: hsl(0 0% 100%) !important;
@@ -44,7 +42,6 @@ button[data-variant="default"]:hover {
     background-color: hsl(0 0% 90%) !important;
 }
 
-/* Send button/icon */
 .cl-send-button,
 button[aria-label="send"] {
     color: hsl(0 0% 15%) !important;
@@ -55,12 +52,10 @@ button[aria-label="send"] {
     color: hsl(0 0% 100%) !important;
 }
 
-/* Remove focus border/outline on input */
 *:focus-visible {
     outline: none !important;
 }
 
-/* Input/textarea focus - remove border ring */
 input:focus,
 textarea:focus,
 [contenteditable]:focus,
@@ -73,7 +68,6 @@ textarea:focus,
     --tw-ring-shadow: none !important;
 }
 
-/* Message input container */
 [data-testid="composer"] *:focus,
 [data-testid="composer"] *:focus-visible,
 .composer *:focus,
@@ -84,7 +78,6 @@ textarea:focus,
     --tw-ring-shadow: 0 0 0 0 transparent !important;
 }
 
-/* Links */
 a {
     color: hsl(0 0% 30%);
 }
@@ -173,8 +166,6 @@ a:hover {
     animation: dots 1.5s steps(1) infinite;
 }
 
-/* Query Suggestion Action Buttons Container */
-/* When label is injected, restyle the container to stack vertically */
 div[data-label-injected="true"] {
     display: flex !important;
     flex-direction: column !important;
@@ -188,9 +179,7 @@ div[data-label-injected="true"]>button[data-state] {
     order: -1 !important;
 }
 
-
-
-/* Query Suggestion Label (injected via custom.js) */
+/* Query Suggestion */
 .suggestion-label {
     order: 0 !important;
     font-size: 1rem;
@@ -204,7 +193,6 @@ div[data-label-injected="true"]>button[data-state] {
     color: hsl(0 0% 100%);
 }
 
-/* Suggestion buttons - buttons with UUID ids inside the injected container */
 div[data-label-injected="true"]>button[id] {
     order: 1 !important;
     white-space: normal !important;
@@ -237,11 +225,7 @@ div[data-label-injected="true"]>button[id]:hover {
     background-color: hsl(0 0% 20%) !important;
 }
 
-/* ============================================================
-   Popup Himbauan Readme
-   ============================================================ */
-
-/* Overlay - backdrop */
+/* Popup Readme */
 .readme-popup-overlay {
     position: fixed;
     inset: 0;
@@ -265,7 +249,6 @@ div[data-label-injected="true"]>button[id]:hover {
     backdrop-filter: blur(0px);
 }
 
-/* Modal box */
 .readme-popup-modal {
     background-color: hsl(0 0% 100%);
     border-radius: 16px;
@@ -294,14 +277,12 @@ div[data-label-injected="true"]>button[id]:hover {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
-/* Icon */
 .readme-popup-icon {
     font-size: 3rem;
     margin-bottom: 12px;
     line-height: 1;
 }
 
-/* Title */
 .readme-popup-title {
     font-size: 1.35rem;
     font-weight: 700;
@@ -313,7 +294,6 @@ div[data-label-injected="true"]>button[id]:hover {
     color: hsl(0 0% 95%);
 }
 
-/* Message text */
 .readme-popup-message {
     font-size: 0.925rem;
     line-height: 1.6;
@@ -325,14 +305,12 @@ div[data-label-injected="true"]>button[id]:hover {
     color: hsl(0 0% 65%);
 }
 
-/* Button container */
 .readme-popup-buttons {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-/* Shared button style */
 .readme-popup-btn {
     display: inline-flex;
     align-items: center;
@@ -347,7 +325,6 @@ div[data-label-injected="true"]>button[id]:hover {
     width: 100%;
 }
 
-/* Primary button - "Baca Panduan" */
 .readme-popup-btn-primary {
     background-color: hsl(0 0% 10%);
     color: hsl(0 0% 100%);
@@ -369,7 +346,6 @@ div[data-label-injected="true"]>button[id]:hover {
     box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
 }
 
-/* Secondary button - "Nanti Saja" */
 .readme-popup-btn-secondary {
     background-color: transparent;
     color: hsl(0 0% 50%);
@@ -389,22 +365,15 @@ div[data-label-injected="true"]>button[id]:hover {
     color: hsl(0 0% 80%);
 }
 
-/* ============================================================
-   Readme Page - Padding atas (dialog content)
-   ============================================================ */
-
-/* Konten Readme (termasuk h2 title) - tambah padding atas */
 [role="dialog"] .mx-auto.flex.flex-col {
     padding-top: 40px !important;
 }
 
-/* Close button - geser sedikit ke bawah */
 [role="dialog"] button.absolute.right-4.top-4 {
     top: 3.5rem !important;
     right: 2rem !important;
 }
 
-/* Perbesar ukuran icon close button */
 [role="dialog"] button.absolute.right-4.top-4 svg {
     width: 32px !important;
     height: 32px !important;

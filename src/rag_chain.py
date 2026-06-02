@@ -6,12 +6,11 @@ from src.config import GROQ_API_KEY, PINECONE_API_KEY, PINECONE_INDEX_NAME, LLM_
 from src.embeddings import get_embeddings
 
 
-# Custom exception for rate limit handling
 class RateLimitError(Exception):
     """Raised when Groq API rate limit is exceeded (HTTP 429)"""
     def __init__(self, message: str, retry_after: int = None):
         self.message = message
-        self.retry_after = retry_after  # seconds to wait before retry
+        self.retry_after = retry_after
         super().__init__(self.message)
 
 SYSTEM_PROMPT = """
@@ -86,7 +85,6 @@ Jawaban yang diberikan: {answer}
 
 Saran pertanyaan:"""
 
-# Format retrieved documents into context string
 def format_docs(docs: List[Document]) -> str:
     formatted = []
     for doc in docs:
@@ -98,25 +96,19 @@ def format_docs(docs: List[Document]) -> str:
     
     return "\n\n---\n\n".join(formatted)
 
-# Format response for better display
 def format_response(text: str) -> str:
     import re
     
-    # Clean up repeated dots (e.g. ".." or "..." that are not intentional ellipsis)
-    # Replace 2 consecutive dots with a single dot (but keep 3-dot ellipsis "…" or "..." intact)
     text = re.sub(r'(?<!\.)\.\.(?!\.)', '.', text)
     
     lines = text.split('\n')
     formatted_lines = []
     
     for line in lines:
-        # Format heading
         if line.strip().startswith('#'):
             formatted_lines.append(f"\n{line}\n")
-        # Format list items
         elif line.strip().startswith(('-', '*', '•')):
             formatted_lines.append(line)
-        # Format numbered list
         elif line.strip() and line.strip()[0].isdigit() and '.' in line[:3]:
             formatted_lines.append(line)
         else:
@@ -124,7 +116,6 @@ def format_response(text: str) -> str:
     
     return '\n'.join(formatted_lines)
 
-# School name patterns to remove from query (sorted by length, longest first)
 SCHOOL_NAME_PATTERNS = [
     "sd integral luqman al hakim situbondo",
     "sd integral luqman al hakim",
@@ -136,30 +127,20 @@ SCHOOL_NAME_PATTERNS = [
 ]
 
 def rewrite_query(query: str) -> str:
-    """
-    Rewrite query untuk optimasi retrieval.
-    - Hapus nama sekolah (redundant karena semua dokumen tentang sekolah ini)
-    - Normalisasi whitespace
-    """
     rewritten = query.lower()
     
-    # Hapus nama sekolah dari query
     for pattern in SCHOOL_NAME_PATTERNS:
         rewritten = rewritten.replace(pattern, "")
     
-    # Normalisasi whitespace
     rewritten = " ".join(rewritten.split())
-    
-    # Jika query kosong setelah rewrite, gunakan query asli
+
     if not rewritten.strip():
         return query
     
     return rewritten
 
 
-class PineconeRetriever:
-    # Custom retriever that uses E5 embeddings with query prefix.
-    
+class PineconeRetriever:    
     def __init__(self, k: int = 4):
         self.k = k
         self.embeddings = get_embeddings()
@@ -167,28 +148,19 @@ class PineconeRetriever:
         pc = Pinecone(api_key=PINECONE_API_KEY)
         self.index = pc.Index(PINECONE_INDEX_NAME)
         print(f"✅ Retriever initialized (k={k})")
-    
-    # Retrieve relevant documents for a query.
+
     def invoke(self, query: str) -> List[Document]:
-        # Rewrite query untuk optimasi retrieval
         rewritten_query = rewrite_query(query)
-        
         query_embedding = self.embeddings.embed_query(rewritten_query)
-        
         results = self.index.query(
             vector=query_embedding,
             top_k=self.k,
             include_metadata=True
         )
-        
-        # DEBUG: Log query results
-        print(f"\n📝 Original Query: '{query}'")
-        print(f"🔄 Rewritten Query: '{rewritten_query}'")
-        print(f"📊 Pinecone returned {len(results.matches)} matches")
-        for i, match in enumerate(results.matches):  # Show ALL matches
+    
+        for i, match in enumerate(results.matches):
             print(f"   [{i+1}] Score: {match.score:.4f} | Section: {match.metadata.get('section_title', 'N/A')}")
         
-        # Convert Pinecone matches to LangChain Documents
         documents = []
         for match in results.matches:
             content = match.metadata.get("content", "")
@@ -199,7 +171,7 @@ class PineconeRetriever:
                     "source": match.metadata.get("source", "Unknown"),
                     "section_title": match.metadata.get("section_title", ""),
                     "sequence": match.metadata.get("sequence", 0),
-                    "score": match.score  # Store similarity score for downstream filtering
+                    "score": match.score 
                 }
             )
             documents.append(doc)
@@ -214,7 +186,6 @@ class GroqLLM:
         self.model = model_name
         print(f"✅ LLM initialized: {model_name}")
     
-    # Build user message with context and question.
     def _build_user_message(self, question: str, context: str) -> str:
         return f"""Konteks dari Dokumen Sekolah:
 ---
@@ -223,7 +194,7 @@ class GroqLLM:
 
 Pertanyaan: {question}"""
 
-    # Generate answer based on question and context (non-streaming)
+    # Generate answer (non-streaming)
     def generate(self, question: str, context: str) -> str:
         try:
             user_message = self._build_user_message(question, context)
@@ -247,7 +218,6 @@ Pertanyaan: {question}"""
                 stream=False
             )
             
-            # Ekstrak token usage
             token_usage = {
                 "prompt_tokens": completion.usage.prompt_tokens,
                 "completion_tokens": completion.usage.completion_tokens,
@@ -260,7 +230,6 @@ Pertanyaan: {question}"""
             return format_response(response_text.strip())
             
         except GroqRateLimitError as e:
-            # Extract retry_after from error response if available
             retry_after = None
             if hasattr(e, 'response') and e.response is not None:
                 retry_after = e.response.headers.get('retry-after')
@@ -277,7 +246,6 @@ Pertanyaan: {question}"""
             print(f"Groq API error: {str(e)}\")")
             raise
     
-    # Generate answer with streaming 
     def generate_stream(self, question: str, context: str):
         try:
             user_message = self._build_user_message(question, context)
@@ -307,7 +275,6 @@ Pertanyaan: {question}"""
                     yield content
                     
         except GroqRateLimitError as e:
-            # Extract retry_after from error response if available
             retry_after = None
             if hasattr(e, 'response') and e.response is not None:
                 retry_after = e.response.headers.get('retry-after')
@@ -324,13 +291,11 @@ Pertanyaan: {question}"""
             print(f"Groq API error: {str(e)}")
             raise
     
-    # Generate topic-based query suggestions from section headings
     def generate_suggestions(self, question: str, docs: List[Document], answer: str) -> List[str]:
         try:
             if not docs:
                 return []
             
-            # Extract unique section titles with source from retrieved docs
             seen = set()
             available_sections = []
             for doc in docs:
@@ -376,25 +341,19 @@ Pertanyaan: {question}"""
             
             response_text = completion.choices[0].message.content.strip()
             
-            # Handle "no relevant suggestions" response
             if "TIDAK_ADA" in response_text.upper():
                 print("💡 No relevant suggestions for this topic")
                 return []
             
-            # Parse suggestions: split by newline, clean up
             suggestions = []
             print(f"📨 Raw suggestion response: {repr(response_text)}")
             for line in response_text.split("\n"):
                 line = line.strip()
-                # Remove numbering/bullets if model adds them
                 line = line.lstrip("0123456789.-) ").strip()
-                # Only accept valid question lines (must end with ?)
                 if (line and len(line) > 3 and len(line) <= 80 
-                    # and line.endswith("?")
                     and "TIDAK_ADA" not in line.upper()):
                     suggestions.append(line)
             
-            # Return max 2 suggestions
             suggestions = suggestions[:2]
             
             print(f"💡 Generated {len(suggestions)} suggestions")
@@ -407,28 +366,21 @@ Pertanyaan: {question}"""
             print(f"⚠️ Suggestion generation failed (non-critical): {str(e)}")
             return []
 
-# Initialize Pinecone retriever
 def get_retriever(k: int = 4) -> PineconeRetriever:
     return PineconeRetriever(k=k)
 
-# Initialize Groq LLM
 def get_llm() -> GroqLLM:
     return GroqLLM()
 
 class RAGChain:
-
-    # Initialize RAG chain
     def __init__(self, k: int = 4):
         self.retriever = get_retriever(k=k)
         self.llm = get_llm()
         print("RAG chain created successfully")
-    
-    # Process a question through the RAG pipeline
+
     def invoke(self, question: str) -> Dict:
-        # Retrieve relevant documents
         docs = self.retriever.invoke(question)
         
-        # Check if we have results
         if not docs:
             return {
                 "answer": ("Mohon maaf, saya tidak menemukan informasi yang relevan dengan pertanyaan Anda "
@@ -437,10 +389,7 @@ class RAGChain:
                 "sources": []
             }
         
-        # Format context
         context = format_docs(docs)
-        
-        # Generate answer
         answer = self.llm.generate(question, context)
         
         return {
@@ -448,11 +397,9 @@ class RAGChain:
             "sources": docs
         }
 
-# Create RAG chain
 def create_rag_chain(k: int = 4) -> RAGChain:
     return RAGChain(k=k)
 
-# Create RAG chain components for Chainlit app
 def create_rag_chain_with_sources(k: int = 4):
     retriever = get_retriever(k=k)
     llm = get_llm()

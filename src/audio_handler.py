@@ -4,11 +4,9 @@ import numpy as np
 from groq import Groq
 from src.config import GROQ_API_KEY, STT_MODEL_NAME, STT_PROMPT
 
-MIN_AUDIO_DURATION = 1.0  # Minimum audio duration in seconds
-MIN_AUDIO_ENERGY = 300    # Minimum RMS energy to consider as speech (not silence/noise)
+MIN_AUDIO_DURATION = 1.0
+MIN_AUDIO_ENERGY = 300
 
-# Known Whisper hallucination phrases (case-insensitive match)
-# Whisper often produces these when audio has low signal or is mostly silence
 WHISPER_HALLUCINATIONS = [
     "terima kasih",
     "terima kasih telah menonton",
@@ -26,14 +24,12 @@ WHISPER_HALLUCINATIONS = [
     "SUBSCRIBE, LIKE, KOMEN, SHARE",
 ]
 
-
 class AudioHandler:
     def __init__(self):
         self.client = Groq(api_key=GROQ_API_KEY)
         self.model = STT_MODEL_NAME
         print(f"✅ AudioHandler initialized: {self.model}")
-    
-    # Check if audio has enough energy to be speech (not just silence/noise)
+
     def has_speech_energy(self, audio_chunks: list) -> bool:
         if not audio_chunks:
             return False
@@ -42,7 +38,6 @@ class AudioHandler:
         print(f"🔊 Audio RMS energy: {rms} (threshold: {MIN_AUDIO_ENERGY})")
         return rms >= MIN_AUDIO_ENERGY
     
-    # Check if transcription is a known Whisper hallucination
     def is_hallucination(self, text: str) -> bool:
         import string
         normalized = text.strip().lower().strip(string.punctuation + " ")
@@ -51,8 +46,7 @@ class AudioHandler:
                 print(f"🚫 Whisper hallucination detected: '{text}'")
                 return True
         return False
-    
-    # Transcribe audio to Indonesian text using Groq Whisper
+
     def transcribe(self, audio_buffer: bytes, mime_type: str = "audio/wav") -> str:
         audio_file = ("audio.wav", audio_buffer, mime_type)
         
@@ -67,13 +61,11 @@ class AudioHandler:
         
         text = response.strip() if response else ""
         
-        # Filter known hallucinations
         if text and self.is_hallucination(text):
             return ""
         
         return text
     
-    # Transcribe audio chunks for interim streaming results (quick partial transcription)
     def transcribe_chunks(self, audio_chunks: list, sample_rate: int = 16000) -> str:
         """Transcribe accumulated audio chunks for interim/streaming display.
         Returns transcribed text or empty string on failure."""
@@ -81,36 +73,29 @@ class AudioHandler:
             return ""
         
         try:
-            # Convert chunks to WAV
             wav_bytes, duration = self.chunks_to_wav(audio_chunks, sample_rate)
-            
-            # Skip if too short (< 0.5s won't produce useful results)
+
             if duration < 0.5:
                 return ""
             
-            # Transcribe using Groq (fast — typically < 0.5s)
             text = self.transcribe(wav_bytes)
             return text if text else ""
         except Exception as e:
             print(f"⚠️ Interim transcription error: {e}")
             return ""
     
-    # Convert audio chunks to WAV format
     def chunks_to_wav(self, audio_chunks: list, sample_rate: int = 16000) -> tuple[bytes, float]:
         if not audio_chunks:
             return b"", 0.0
             
-        # Concatenate all chunks
         concatenated = np.concatenate(audio_chunks)
         
-        # Calculate duration
         duration = len(concatenated) / sample_rate
         
-        # Create WAV buffer
         wav_buffer = io.BytesIO()
         with wave.open(wav_buffer, "wb") as wav_file:
-            wav_file.setnchannels(1)  # mono
-            wav_file.setsampwidth(2)  # 16-bit (2 bytes per sample)
+            wav_file.setnchannels(1) 
+            wav_file.setsampwidth(2)
             wav_file.setframerate(sample_rate)
             wav_file.writeframes(concatenated.tobytes())
         
@@ -120,4 +105,3 @@ class AudioHandler:
 
 def get_audio_handler() -> AudioHandler:
     return AudioHandler()
-

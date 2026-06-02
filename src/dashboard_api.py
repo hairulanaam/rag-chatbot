@@ -1,6 +1,3 @@
-"""
-Dashboard API routes for managing chatbot documents and indexing.
-"""
 import os
 import jwt
 from pathlib import Path
@@ -432,11 +429,6 @@ async def api_resolve_log(log_id: int, username: str = Depends(get_current_user)
     if not result["success"]:
         raise HTTPException(status_code=404, detail=result["message"])
     return result
-
-
-# ============================================================
-# Helpers
-# ============================================================
 
 def _format_size(size_bytes: int) -> str:
     """Format file size to human readable string."""
